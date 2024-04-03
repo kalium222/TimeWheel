@@ -21,6 +21,11 @@ public class TimerManagerWindow : EditorWindow
     private ulong int2time(int m, int s, int min, int h, int d)
     {
         ulong result = 0;
+        TimerManager.TimerManager instance = TimerManager.TimerManager.s_instance;
+        List<TimerManager.TimeWheel> list = instance.TimeWheelArray;
+        result = (ulong)m*list[0].TickMs + (ulong)s*list[1].TickMs + (ulong)min*list[2].TickMs
+            + (ulong)h*list[3].TickMs + (ulong)d*list[4].TickMs;
+        return result;
     }
 
     private void OnGUI()
