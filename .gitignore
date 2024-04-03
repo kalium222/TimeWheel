@@ -1,0 +1,9 @@
+# ignore
+*
+
+# except
+!Scripts/
+!Editor/
+!*.cs
+!.gitignore
+
