@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using UnityEngine;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace TimerManager
 {
@@ -193,9 +194,25 @@ namespace TimerManager
             get { return m_timeWheelArray; }
         }
 
-        public void StartRunning()
+        // return true if started succesfully
+        // return false if instance has already
+        // been launched
+        public bool StartRunning()
         {
-            m_stop = false;
+            if ( m_stop )
+            {
+                m_stop = false;
+                return true;
+            }
+            else 
+            {
+                return false;
+            }
+        }
+
+        public bool IsRunning
+        {
+            get { return !m_stop; }
         }
 
         public Timer GetTimer(uint id)
@@ -303,6 +320,7 @@ namespace TimerManager
 
         public void Reset()
         {
+            m_stop = true;
             m_timerTable.Clear();
             foreach ( TimeWheel tw in m_timeWheelArray )
                 tw.ClearAll();

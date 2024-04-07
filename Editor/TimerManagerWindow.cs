@@ -12,7 +12,7 @@ public class TimerManagerWindow : EditorWindow
 
     private bool m_foldAddTimer = true;
 
-    [MenuItem("Window/TimerManager")]
+    [MenuItem("Window/MyWindow/TimerManager")]
     public static void ShowWindow()
     {
         EditorWindow.GetWindow(typeof(TimerManagerWindow));
@@ -32,16 +32,40 @@ public class TimerManagerWindow : EditorWindow
     {
         GUILayout.Label ("Timer Manager", EditorStyles.boldLabel);
 
-        myString = EditorGUILayout.TextField ("Text Field", myString);
-        if (GUILayout.Button("Start TimerManager"))
+        TimerManager.TimerManager instance = TimerManager.TimerManager.s_instance;
+        if ( instance==null ) 
         {
-            TimerManager.TimerManager.s_instance.StartRunning();
-            Debug.Log("Started TimerManager!");
+            GUILayout.Label("Enter Play mode to instantiate the Timer Manager.");
+            return;
         }
-        
+
+        myString = EditorGUILayout.TextField("Test Field", myString);
+        EditorGUILayout.LabelField("isRunning:", instance.IsRunning.ToString());
+
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("Start"))
+        {
+            if ( instance.StartRunning())
+                Debug.Log("Started TimerManager!");
+            else
+                Debug.Log("Instance have already been launched!");
+        }
+        EditorGUILayout.Space(5);
+        if (GUILayout.Button("Reset"))
+        {
+            instance.Reset();
+            Debug.Log("Reset TimerManager!");
+        }
+        EditorGUILayout.EndHorizontal();
+
         m_foldAddTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldAddTimer, "Add Timer");
         if ( m_foldAddTimer )
         {
+            int m = EditorGUILayout.IntField("1/10s", 0);
+            int s = EditorGUILayout.IntField("s", 0);
+            int min = EditorGUILayout.IntField("min", 0);
+            int hour = EditorGUILayout.IntField("hour", 0);
+            int day = EditorGUILayout.IntField("day", 0);
             GUILayout.Button("Add");
         }
         EditorGUILayout.EndFoldoutHeaderGroup();
