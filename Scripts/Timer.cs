@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 
-namespace TimerManager
+namespace Timer
 {
     public class Timer
     {

@@ -1,7 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using Timer;
 
 public class TimerManagerWindow : EditorWindow
 {
@@ -9,6 +9,8 @@ public class TimerManagerWindow : EditorWindow
     bool groupEnabled;
     bool myBool = true;
     float myFloat = 1.23f;
+    public int ms, s, min, hour, day;
+    public int i_ms, i_s, i_min, i_hour, i_day;
 
     private bool m_foldAddTimer = true;
 
@@ -21,8 +23,8 @@ public class TimerManagerWindow : EditorWindow
     private ulong Int2time(int m, int s, int min, int h, int d)
     {
         ulong result = 0;
-        TimerManager.TimerManager instance = TimerManager.TimerManager.s_instance;
-        List<TimerManager.TimeWheel> list = instance.TimeWheelArray;
+        Timer.TimerManager instance = Timer.TimerManager.s_instance;
+        List<Timer.TimeWheel> list = instance.TimeWheelArray;
         result = (ulong)m*list[0].TickMs + (ulong)s*list[1].TickMs + (ulong)min*list[2].TickMs
             + (ulong)h*list[3].TickMs + (ulong)d*list[4].TickMs;
         return result;
@@ -32,7 +34,7 @@ public class TimerManagerWindow : EditorWindow
     {
         GUILayout.Label ("Timer Manager", EditorStyles.boldLabel);
 
-        TimerManager.TimerManager instance = TimerManager.TimerManager.s_instance;
+        Timer.TimerManager instance = Timer.TimerManager.s_instance;
         if ( instance==null ) 
         {
             GUILayout.Label("Enter Play mode to instantiate the Timer Manager.");
@@ -62,20 +64,20 @@ public class TimerManagerWindow : EditorWindow
         if ( m_foldAddTimer )
         {
             GUILayout.Label("expire: ");
-            int m = EditorGUILayout.IntField("1/10s", 0);
-            int s = EditorGUILayout.IntField("s", 0);
-            int min = EditorGUILayout.IntField("min", 0);
-            int hour = EditorGUILayout.IntField("hour", 0);
-            int day = EditorGUILayout.IntField("day", 0);
-            ulong expire = Int2time(m, s, min, hour, day);
+            ms = EditorGUILayout.IntField("1/10s", ms);
+            s = EditorGUILayout.IntField("s", s);
+            min = EditorGUILayout.IntField("min", min);
+            hour = EditorGUILayout.IntField("hour", hour);
+            day = EditorGUILayout.IntField("day", day);
+            ulong expire = Int2time(ms, s, min, hour, day);
 
             GUILayout.Label("interval: ");
-            int i_m = EditorGUILayout.IntField("1/10s", 0);
-            int i_s = EditorGUILayout.IntField("s", 0);
-            int i_min = EditorGUILayout.IntField("min", 0);
-            int i_hour = EditorGUILayout.IntField("hour", 0);
-            int i_day = EditorGUILayout.IntField("day", 0);
-            ulong interval = Int2time(i_m, i_s, i_min, i_hour, i_day);
+            i_ms = EditorGUILayout.IntField("1/10s", i_ms);
+            i_s = EditorGUILayout.IntField("s", i_s);
+            i_min = EditorGUILayout.IntField("min", i_min);
+            i_hour = EditorGUILayout.IntField("hour", i_hour);
+            i_day = EditorGUILayout.IntField("day", i_day);
+            ulong interval = Int2time(i_ms, i_s, i_min, i_hour, i_day);
 
             GUILayout.Label("times: ");
             int times = EditorGUILayout.IntField("times", 1);
@@ -97,5 +99,14 @@ public class TimerManagerWindow : EditorWindow
             myBool = EditorGUILayout.Toggle ("Toggle", myBool);
             myFloat = EditorGUILayout.Slider ("Slider", myFloat, -3, 3);
         EditorGUILayout.EndToggleGroup ();
+
+        foreach (TimeWheel tw in instance.TimeWheelArray)
+        {
+            GUILayout.Label("TimerList: ");
+            foreach (int i in tw.GetDistri())
+            {
+                GUILayout.Label(i.ToString());
+            }
+        }
     }
 }

@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using UnityEngine;
-using System.Runtime.InteropServices.WindowsRuntime;
 
-namespace TimerManager
+namespace Timer
 {
     public class TimeWheel
     {
@@ -74,6 +73,16 @@ namespace TimerManager
         public TimerList GetCurrentTimerList()
         {
             return m_bucketArray[m_current];
+        }
+
+        public List<int> GetDistri()
+        {
+            List<int> res = new();
+            foreach ( TimerList l in m_bucketArray )
+            {
+                res.Add(l.Count);
+            }
+            return res;
         }
 
         // 不判断条件
