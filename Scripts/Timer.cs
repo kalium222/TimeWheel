@@ -42,10 +42,10 @@ namespace Timer
             Task += task;
         }
 
-        public Timer(uint id, ulong postpone, ulong interval, uint times, Action task) 
+        public Timer(uint id, ulong expire, ulong interval, uint times, Action task) 
         {
             m_id = id;
-            this.expire = postpone;
+            this.expire = expire;
             this.interval = interval;
             this.times = times;
             Task += task;
@@ -107,7 +107,7 @@ namespace Timer
             }
             bool IEnumerator.MoveNext()
             {
-                m_postion = m_postion != null ? m_postion.Next : null;
+                m_postion = m_postion?.Next;
                 return m_postion != null;
             }
             object IEnumerator.Current
@@ -160,6 +160,10 @@ namespace Timer
         {
             get { return m_head; }
         }
+
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        public Timer? First => m_head.Next;
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 
         public int Count
         {

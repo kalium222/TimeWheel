@@ -160,13 +160,17 @@ namespace Timer
         // 重复任务重新放置
         private void Tick()
         {
-            for (int i=m_timeWheelArray.Count-1; i>0; i--) // 向下移动    
-                foreach ( Timer t in m_timeWheelArray[i].GetCurrentTimerList())
-                    this.RefreshTimer(t);
-
-            // do tasks
-            foreach ( Timer t in m_timeWheelArray[0].GetCurrentTimerList())
+            TimerList temp;
+            for (int i=m_timeWheelArray.Count-1; i>0; i--) // 向下移动
             {
+                temp = m_timeWheelArray[i].GetCurrentTimerList();
+                while (temp.First!=null) this.RefreshTimer(temp.First);
+            }
+            // do tasks
+            temp = m_timeWheelArray[0].GetCurrentTimerList();
+            while (temp.First!=null) 
+            {
+                Timer t = temp.First;
                 t.DoTask();
                 if ( t.times <= 1 )
                     this.RemoveTimer(t);
@@ -175,7 +179,19 @@ namespace Timer
                     this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
                         t.interval, t.times-1);
                 }
-            }
+            } 
+            // foreach ( Timer t in m_timeWheelArray[0].GetCurrentTimerList())
+            // {
+            //     t.DoTask();
+            //     this.RemoveTimer(t);
+            //     if ( t.times <= 1 )
+            //         this.RemoveTimer(t);
+            //     else 
+            //     {
+            //         this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
+            //             t.interval, t.times-1);
+            //     }
+            // }
 
             bool carry = true;
             foreach ( TimeWheel tw in m_timeWheelArray )
@@ -310,7 +326,7 @@ namespace Timer
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
             Timer? timer = m_timerTable[id];
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-            m_timerTable.Remove(id, out timer);
+            m_timerTable.TryRemove(id, out timer);
             TimerList.Detach(timer);
             return timer;
         }
