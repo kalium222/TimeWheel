@@ -5,12 +5,10 @@ using Timer;
 
 public class TimerManagerWindow : EditorWindow
 {
-    string myString = "Hello World";
     bool groupEnabled;
-    bool myBool = true;
-    float myFloat = 1.23f;
     public int ms, s, min, hour, day;
     public int i_ms, i_s, i_min, i_hour, i_day;
+    public int times;
 
     private bool m_foldAddTimer = true;
 
@@ -41,7 +39,6 @@ public class TimerManagerWindow : EditorWindow
             return;
         }
 
-        myString = EditorGUILayout.TextField("Test Field", myString);
         EditorGUILayout.LabelField("isRunning:", instance.IsRunning.ToString());
 
         EditorGUILayout.BeginHorizontal();
@@ -80,7 +77,7 @@ public class TimerManagerWindow : EditorWindow
             ulong interval = Int2time(i_ms, i_s, i_min, i_hour, i_day);
 
             GUILayout.Label("times: ");
-            int times = EditorGUILayout.IntField("times", 1);
+            times = EditorGUILayout.IntField("times", times);
             
             if ( GUILayout.Button("Add"))
             {
@@ -96,8 +93,7 @@ public class TimerManagerWindow : EditorWindow
         EditorGUILayout.LabelField("Timer Count: ", instance.Count.ToString());
         
         groupEnabled = EditorGUILayout.BeginToggleGroup ("Optional Settings", groupEnabled);
-            myBool = EditorGUILayout.Toggle ("Toggle", myBool);
-            myFloat = EditorGUILayout.Slider ("Slider", myFloat, -3, 3);
+        GUILayout.Label("toggle group!");
         EditorGUILayout.EndToggleGroup ();
 
         foreach (TimeWheel tw in instance.TimeWheelArray)

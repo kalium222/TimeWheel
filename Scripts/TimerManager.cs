@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Timer
 {
@@ -159,34 +160,31 @@ namespace Timer
         // 重复任务重新放置
         private void Tick()
         {
+            for (int i=m_timeWheelArray.Count-1; i>0; i--) // 向下移动    
+                foreach ( Timer t in m_timeWheelArray[i].GetCurrentTimerList())
+                    this.RefreshTimer(t);
+
+            // do tasks
+            foreach ( Timer t in m_timeWheelArray[0].GetCurrentTimerList())
+            {
+                t.DoTask();
+                if ( t.times <= 1 )
+                    this.RemoveTimer(t);
+                else 
+                {
+                    this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
+                        t.interval, t.times-1);
+                }
+            }
+
             bool carry = true;
             foreach ( TimeWheel tw in m_timeWheelArray )
             {
                 if ( !carry )
                     break;
                 carry = tw.Tick();
-                if ( tw == m_timeWheelArray[0] )
-                {
-                    foreach ( Timer t in tw.GetCurrentTimerList() )
-                    {
-                        t.DoTask();
-                        if ( t.times<=1 )
-                        {
-                            this.RemoveTimer(t);
-                        }
-                        else
-                        {
-                            this.ModifyTimer(t, t.interval+this.GetCurrentTime(), 
-                                    t.interval, t.times-1);
-                        }
-                    }
-                }
-                else // 向下移动    
-                {
-                    foreach ( Timer t in tw.GetCurrentTimerList() )
-                        this.RefreshTimer(t);
-                }
             }
+            
         }
 
         private uint GetAvaliableId()
@@ -287,7 +285,7 @@ namespace Timer
             {
                 foreach ( TimeWheel tw in m_timeWheelArray )
                 {
-                    if ( idx <= tw.MaxTime )
+                    if ( idx < tw.MaxTime )
                     {
                         tw.AddTimer(timer);
                         break;
