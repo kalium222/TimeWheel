@@ -230,6 +230,19 @@ namespace TimerManager
             return result;
         }
 
+        public int Count
+        {
+            get
+            {
+                int res = 0;
+                foreach ( int i in GetDistri() )
+                {
+                    res += i;
+                }
+                return res;
+            }
+        }
+
         public ulong GetCurrentTime()
         {
             ulong result = 0;
