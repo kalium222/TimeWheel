@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace Timer
 {
@@ -111,16 +110,21 @@ namespace Timer
     [AddComponentMenu("Timer/TimerManager")]
     public class TimerManager : MonoBehaviour 
     {
-        // private field
+        // public field
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public static TimerManager? s_instance;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        // timespan for one tick
+        public TimeSpan deltaTime;
+
+        // private field
         // 由小到大
         private List<TimeWheel> m_timeWheelArray;
         private ConcurrentDictionary<uint, Timer> m_timerTable;
         private uint m_maxId = 0;
         private bool m_stop = true;
-        private float m_deltaTime = 0;
+        private DateTime m_current;
+        
 
         private void Awake()
         {
@@ -132,26 +136,31 @@ namespace Timer
             {
                 Destroy(gameObject);
             }
+            Init();
+        }
+
+        private void Init()
+        {
             m_timeWheelArray = new List<TimeWheel>
             {
                 // ms, s, min, hour, day
-                new(1, 10),
-                new(1 * 10, 60),
-                new(1 * 10 * 60, 60),
-                new(1 * 10 * 60 * 60, 24),
-                new(1 * 10 * 60 * 60 * 24, 50)
+                new(1, 1000),
+                new(1 * 1000, 60),
+                new(1 * 1000 * 60, 60),
+                new(1 * 1000 * 60 * 60, 24),
+                new(1 * 1000 * 60 * 60 * 24, 50)
             };
+            deltaTime = new TimeSpan(0, 0, 0, 0, 1);
             m_timerTable = new ConcurrentDictionary<uint, Timer>();
+            m_current = DateTime.Now;
         }
 
         private void Update()
         {
-            if ( !m_stop ) 
-                m_deltaTime += Time.deltaTime;
-            if ( m_deltaTime>=0.1 )
+            DateTime now = DateTime.Now;
             {
-                m_deltaTime = 0;
                 Tick();
+                m_current += deltaTime;
             }
         }
 
@@ -179,20 +188,7 @@ namespace Timer
                     this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
                         t.interval, t.times-1);
                 }
-            } 
-            // foreach ( Timer t in m_timeWheelArray[0].GetCurrentTimerList())
-            // {
-            //     t.DoTask();
-            //     this.RemoveTimer(t);
-            //     if ( t.times <= 1 )
-            //         this.RemoveTimer(t);
-            //     else 
-            //     {
-            //         this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
-            //             t.interval, t.times-1);
-            //     }
-            // }
-
+            }
             bool carry = true;
             foreach ( TimeWheel tw in m_timeWheelArray )
             {
@@ -200,7 +196,6 @@ namespace Timer
                     break;
                 carry = tw.Tick();
             }
-            
         }
 
         private uint GetAvaliableId()
@@ -225,6 +220,7 @@ namespace Timer
             if ( m_stop )
             {
                 m_stop = false;
+                m_current = DateTime.Now;
                 return true;
             }
             else 

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using Timer;
+using System;
 
 public class TimerManagerWindow : EditorWindow
 {
@@ -82,11 +83,10 @@ public class TimerManagerWindow : EditorWindow
             if ( GUILayout.Button("Add"))
             {
                 instance.AddTimer(expire, interval, (uint)times, ()=>{
-                    Debug.Log(expire);
+                    Debug.Log(DateTime.Now.Millisecond);
                 });
                 Debug.Log("Added a Timer!");
             }
-            // TODO:
         }
         EditorGUILayout.EndFoldoutHeaderGroup();
 
@@ -95,6 +95,20 @@ public class TimerManagerWindow : EditorWindow
         groupEnabled = EditorGUILayout.BeginToggleGroup ("Optional Settings", groupEnabled);
         GUILayout.Label("toggle group!");
         EditorGUILayout.EndToggleGroup ();
+
+        EditorGUILayout.LabelField("pressure test: ");
+        EditorGUILayout.BeginHorizontal();
+        if (GUILayout.Button("100,000 and execute"))
+        {
+            // TODO: 
+
+        }
+        EditorGUILayout.Space(5);
+        if (GUILayout.Button("1000,000 add"))
+        {
+            // TODO: 
+        }
+        EditorGUILayout.EndHorizontal();
 
         foreach (TimeWheel tw in instance.TimeWheelArray)
         {
