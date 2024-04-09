@@ -46,6 +46,7 @@ namespace Timer
 
         public void Destroy()
         {
+            // GC will do the rest things
             Next?.Destroy();
             Next = null;
             Prev = null;
