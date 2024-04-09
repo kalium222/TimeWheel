@@ -98,6 +98,20 @@ public class TestTimerManager
         }
     }
 
+    // TimeWheel
+    [Test]
+    public void TestTimeWheelTick()
+    {
+        TimeSpan tickMs = new(0, 0, 1);
+        TimeWheel wheel = new(tickMs, 60);
+        for (int i=0; i<59; i++)
+        {
+            Assert.IsTrue(wheel.GetCurrentTime()==i*tickMs);
+            Assert.IsFalse(wheel.Tick());
+        }
+        Assert.IsTrue(wheel.Tick());
+    }
+
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
     // `yield return null;` to skip a frame.
     [UnityTest]

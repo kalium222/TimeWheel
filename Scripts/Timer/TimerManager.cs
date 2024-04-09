@@ -19,19 +19,6 @@ namespace Timer
         
         public TimeSpan MaxTimeSpan => tickMs * wheelSize;
 
-        public int Count 
-        {
-            get
-            {
-                int result = 0;
-                foreach ( TimerList l in m_bucketArray )
-                {
-                    result += l.Count;
-                }
-                return result;
-            }
-        }
-
         // public method
         public TimeWheel(TimeSpan tickMs, int wheelSize)
         {
@@ -93,6 +80,19 @@ namespace Timer
             foreach ( TimerList l in m_bucketArray )
             {
                 l.Clear();
+            }
+        }
+
+        public int Count 
+        {
+            get
+            {
+                int result = 0;
+                foreach ( TimerList l in m_bucketArray )
+                {
+                    result += l.Count;
+                }
+                return result;
             }
         }
     }
