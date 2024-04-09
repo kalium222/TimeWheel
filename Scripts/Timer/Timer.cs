@@ -161,14 +161,8 @@ namespace Timer
             get
             {
                 int result = 0;
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-                Timer? p = m_head.Next;
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-                while ( p!=null )
-                {
+                foreach ( Timer t in this )
                     result++;
-                    p = p.Next;
-                }
                 return result;
             }
         }

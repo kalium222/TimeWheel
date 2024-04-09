@@ -7,7 +7,9 @@ using Timer;
 
 public class TestTimerManager
 {
-    // A Test behaves as an ordinary method
+    // Test helper classes
+
+    // Timer
     [Test]
     public void TestTimerConstructor()
     {
@@ -57,6 +59,22 @@ public class TestTimerManager
         Assert.IsTrue(a==1);
         t.Callback();
         Assert.IsTrue(a==2);
+    }
+
+    // TimerList
+    [Test]
+    public void TestTimerListIterator()
+    {
+        TimerList l = new();
+        for (int i=0; i<100; i++)
+            l.Add(new Timer.Timer((uint)i, new TimeSpan(1, 1, 1), ()=>{}));
+        int index = 0;
+        foreach ( Timer.Timer t in l ) 
+        {
+            Assert.IsTrue(t.Id==(99-index));
+            index++;
+        }
+        Assert.IsTrue(l.Count==100);
     }
 
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
