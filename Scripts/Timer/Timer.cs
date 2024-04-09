@@ -34,7 +34,8 @@ namespace Timer
             this.callback += callback;
         }
 
-        public Timer(uint id, TimeSpan expire, TimeSpan interval, uint times, Action callback) 
+        public Timer(uint id, TimeSpan expire, TimeSpan interval, 
+                uint times, Action callback) 
         {
             m_id = id;
             this.expire = expire;

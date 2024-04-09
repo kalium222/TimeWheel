@@ -1,8 +1,7 @@
-using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEditor;
 using Timer;
-using System;
 
 public class TimerManagerWindow : EditorWindow
 {
