@@ -112,6 +112,29 @@ public class TestTimerManager
         Assert.IsTrue(wheel.Tick());
     }
 
+    [Test]
+    public void TestTimeWheelGetDistri()
+    {
+        System.Random rd = new();
+        TimeSpan tickMs = new(0, 0, 1);
+        int wheelSize = 60;
+        TimeWheel wheel = new(tickMs, wheelSize);
+        int[] distri = new int[wheelSize];
+        for (int i=0; i<wheelSize; i++)
+        {
+            distri[i] = rd.Next(1, 100);
+            for (int j=0; j<distri[i]; j++)
+            {
+                Timer.Timer t = new(0, i*tickMs, ()=>{});
+                wheel.AddTimer(t);
+            }
+        }
+        for (int i=0; i<wheelSize; i++)
+        {
+            Assert.IsTrue(distri[i]==wheel.GetDistri()[i]);
+        }
+    }
+
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
     // `yield return null;` to skip a frame.
     [UnityTest]
