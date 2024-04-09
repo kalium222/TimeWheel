@@ -47,6 +47,18 @@ public class TestTimerManager
         Assert.IsNull(t3.Prev);
     }
 
+    [Test]
+    public void TestTimerCallback()
+    {
+        int a = 1;
+        Timer.Timer t = new(1, new(), () => {
+            a++;
+        });
+        Assert.IsTrue(a==1);
+        t.Callback();
+        Assert.IsTrue(a==2);
+    }
+
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
     // `yield return null;` to skip a frame.
     [UnityTest]
