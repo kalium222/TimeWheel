@@ -149,6 +149,7 @@ namespace Timer
         private void Update()
         {
             DateTime now = DateTime.Now;
+            while ( !m_stop && m_current<now )
             {
                 Tick();
                 m_current += deltaTime;
