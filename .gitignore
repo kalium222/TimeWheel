@@ -3,7 +3,11 @@
 
 # except
 !Scripts/
+!Scripts/Timer
 !Editor/
+!Tests/
+!Tests/PlayModeTests
 !*.cs
 !.gitignore
+!*.asmdef
 
