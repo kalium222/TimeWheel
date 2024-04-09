@@ -7,53 +7,45 @@ namespace Timer
     {
         // private
         private uint m_id;
-        // 绝对时间
-        public ulong expire;
-        public ulong interval;
-        public uint times;
 
         // public
-        public event Action Task;
+        // time span from being added into the TimerManager to when
+        // it should be executed
+        public TimeSpan expire;
+        public TimeSpan interval;
+        public uint times;
+        public Action callback;
 
         public Timer()
         {
             m_id = 0;
-            expire = 0;
-            interval = 0;
+            expire = new();
+            interval = new();
             times = 1;
-            Task += () => {};
+            callback = () => {};
         }
 
-        public Timer(uint id)
+        public Timer(uint id, TimeSpan expire, Action callback) 
         {
             m_id = id;
-            expire = 0;
-            interval = 0;
+            this.expire = expire;
+            interval = new();
             times = 1;
-            Task += () => {};
+            this.callback += callback;
         }
 
-        public Timer(uint id, ulong postpone, Action task) 
-        {
-            m_id = id;
-            this.expire = postpone;
-            interval = 0;
-            times = 1;
-            Task += task;
-        }
-
-        public Timer(uint id, ulong expire, ulong interval, uint times, Action task) 
+        public Timer(uint id, TimeSpan expire, TimeSpan interval, uint times, Action callback) 
         {
             m_id = id;
             this.expire = expire;
             this.interval = interval;
             this.times = times;
-            Task += task;
+            this.callback += callback;
         }
 
         public void Destroy()
         {
-            if ( Next!=null ) Next.Destroy();
+            Next?.Destroy();
             Next = null;
             Prev = null;
         }
@@ -74,9 +66,9 @@ namespace Timer
         // 应该被HierachicalTimeWheel调用
         // 仅smallest timewheel需DoTask
         // 还需要重新调度
-        public void DoTask()
+        public void Callback()
         {
-            Task.Invoke();
+            callback();
         }
     }
 
@@ -156,10 +148,7 @@ namespace Timer
             m_head.Next = null;
         }
 
-        public Timer Head
-        {
-            get { return m_head; }
-        }
+        public Timer Head => m_head;
 
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public Timer? First => m_head.Next;
@@ -182,5 +171,4 @@ namespace Timer
             }
         }
     }
-
 }

@@ -8,26 +8,16 @@ namespace Timer
 {
     public class TimeWheel
     {
-        // private
-        private readonly ulong m_tickMs;
-        private readonly int m_wheelSize;
+        // private field
+        // current index of the bucket array
         private int m_current;
         private readonly TimerList[] m_bucketArray;
 
-        public ulong TickMs
-        {
-            get { return m_tickMs; }
-        }
-
-        public int WheelSize
-        {
-            get { return m_wheelSize; }
-        }
-
-        public ulong MaxTime
-        {
-            get { return m_tickMs*(ulong)m_wheelSize; }
-        }
+        // public field
+        public readonly TimeSpan tickMs;
+        public readonly int wheelSize;
+        
+        public TimeSpan MaxTimeSpan => tickMs * wheelSize;
 
         public int Count 
         {
@@ -43,13 +33,13 @@ namespace Timer
         }
 
         // public method
-        public TimeWheel(ulong tickMs, int wheelSize)
+        public TimeWheel(TimeSpan tickMs, int wheelSize)
         {
             m_current = 0;
-            m_tickMs = tickMs;
-            m_wheelSize = wheelSize;
+            this.tickMs = tickMs;
+            this.wheelSize = wheelSize;
             m_bucketArray = new TimerList[wheelSize];
-            for (int i=0; i<m_wheelSize; i++)
+            for (int i=0; i< this.wheelSize; i++)
                 m_bucketArray[i] = new TimerList();
         }
 
@@ -59,15 +49,15 @@ namespace Timer
         public bool Tick()
         {
             m_current++;
-            bool carry =  m_current==m_wheelSize ;
-            m_current %= m_wheelSize;
+            bool carry =  m_current==wheelSize ;
+            m_current %= wheelSize;
             return carry;
         }
 
         // 该timewheel上，现在走过的时间
-        public ulong GetCurrentTime()
+        public TimeSpan GetCurrentTime()
         {
-            return ((ulong)m_current) * m_tickMs;
+            return m_current * tickMs;
         }
         
         public TimerList GetCurrentTimerList()
@@ -88,7 +78,7 @@ namespace Timer
         // 不判断条件
         public void AddTimer(Timer timer)
         {
-            m_bucketArray[(int)(timer.expire/m_tickMs)%m_wheelSize].Add(timer);
+            m_bucketArray[(int)(timer.expire/tickMs)%wheelSize].Add(timer);
         }
 
         // 从timewheel中移除timer
@@ -114,11 +104,12 @@ namespace Timer
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public static TimerManager? s_instance;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        // timespan for one tick
+        // timespan for one tick, 1ms
         public TimeSpan deltaTime;
 
         // private field
         // 由小到大
+        // array[0] -> ms, array[1] -> s, ...
         private List<TimeWheel> m_timeWheelArray;
         private ConcurrentDictionary<uint, Timer> m_timerTable;
         private uint m_maxId = 0;
@@ -144,11 +135,11 @@ namespace Timer
             m_timeWheelArray = new List<TimeWheel>
             {
                 // ms, s, min, hour, day
-                new(1, 1000),
-                new(1 * 1000, 60),
-                new(1 * 1000 * 60, 60),
-                new(1 * 1000 * 60 * 60, 24),
-                new(1 * 1000 * 60 * 60 * 24, 50)
+                new(new TimeSpan(0, 0, 0, 0, 1), 1000),
+                new(new TimeSpan(0, 0, 0, 1), 60),
+                new(new TimeSpan(0, 0, 1), 60),
+                new(new TimeSpan(0, 1, 0), 24),
+                new(new TimeSpan(1, 0, 0), 50)
             };
             deltaTime = new TimeSpan(0, 0, 0, 0, 1);
             m_timerTable = new ConcurrentDictionary<uint, Timer>();
@@ -180,7 +171,7 @@ namespace Timer
             while (temp.First!=null) 
             {
                 Timer t = temp.First;
-                t.DoTask();
+                t.Callback();
                 if ( t.times <= 1 )
                     this.RemoveTimer(t);
                 else 
@@ -262,22 +253,23 @@ namespace Timer
             }
         }
 
-        public ulong GetCurrentTime()
+        // total time span from starting running to current time
+        public TimeSpan GetCurrentTime()
         {
-            ulong result = 0;
+            TimeSpan result = new();
             foreach ( TimeWheel timewheel in m_timeWheelArray )
                 result += timewheel.GetCurrentTime();
             return result;
         }
 
-        public ulong GetMaxTime()
+        public TimeSpan GetMaxTime()
         {
-            return m_timeWheelArray.Last().MaxTime;
+            return m_timeWheelArray.Last().MaxTimeSpan;
         }
 
         // 把timer加入Dictionary
         // 根据时间把timer加入合适的timewheel
-        public uint AddTimer(ulong expire, ulong interval, uint times, Action task)
+        public uint AddTimer(TimeSpan expire, TimeSpan interval, uint times, Action task)
         {
             Timer newTimer = new(GetAvaliableId(), expire, interval, times, task);
             this.AddTimer(newTimer);
@@ -288,16 +280,16 @@ namespace Timer
         {
             timer.Id = GetAvaliableId();
             m_timerTable.TryAdd(timer.Id, timer);
-            ulong idx = timer.expire - this.GetCurrentTime();
-            if ( (long)idx <= 0 )
+            TimeSpan idx = timer.expire - GetCurrentTime();
+            if ( timer.expire <= GetCurrentTime() )
                 m_timeWheelArray.First().AddTimer(timer);
-            else if ( idx >= this.GetMaxTime() )
+            else if ( idx >= GetMaxTime() )
                 m_timeWheelArray.Last().AddTimer(timer);
             else
             {
                 foreach ( TimeWheel tw in m_timeWheelArray )
                 {
-                    if ( idx < tw.MaxTime )
+                    if ( idx < tw.MaxTimeSpan )
                     {
                         tw.AddTimer(timer);
                         break;
@@ -334,19 +326,19 @@ namespace Timer
             return 0;
         }
 
-        public int ModifyTimer(Timer timer, ulong postpone, ulong interval, uint times)
+        public int ModifyTimer(Timer timer, TimeSpan expire, TimeSpan interval, uint times)
         {
-            timer.expire = postpone;
+            timer.expire = expire;
             timer.interval = interval;
             timer.times = times;
             this.RefreshTimer(timer);
             return 0;
         }
 
-        public int ModifyTimer(uint id, ulong postpone, ulong interval, uint times)
+        public int ModifyTimer(uint id, TimeSpan expire, TimeSpan interval, uint times)
         {
             Timer modified = GetTimer(id);
-            this.ModifyTimer(modified, postpone, interval, times);
+            this.ModifyTimer(modified, expire, interval, times);
             return 0;
         }
 
