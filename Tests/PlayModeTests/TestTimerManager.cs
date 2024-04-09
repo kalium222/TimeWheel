@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Timer;
+using NUnit.Framework.Internal;
 
 public class TestTimerManager
 {
@@ -75,6 +77,25 @@ public class TestTimerManager
             index++;
         }
         Assert.IsTrue(l.Count==100);
+    }
+
+    [Test]
+    public void TestTimerListDetach()
+    {
+        TimerList l = new();
+        List<Timer.Timer> list = new();
+        for (int i=0; i<100; i++) 
+        {
+            Timer.Timer t = new((uint)i, new TimeSpan(1, 1, 1), ()=>{});
+            l.Add(t);
+            list.Add(t);
+        }
+        Assert.IsTrue(l.Count==100);
+        for (int i=0; i<100; i++)
+        {
+            TimerList.Detach(list[99-i]);
+            Assert.IsTrue(l.Count==99-i);
+        }
     }
 
     // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
