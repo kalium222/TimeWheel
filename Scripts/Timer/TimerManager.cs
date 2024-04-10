@@ -199,10 +199,7 @@ namespace Timer
             return m_maxId;
         }
 
-        public List<TimeWheel> TimeWheelArray
-        {
-            get { return m_timeWheelArray; }
-        }
+        public List<TimeWheel> TimeWheelArray => m_timeWheelArray;
 
         // return true if started succesfully
         // return false if instance has already

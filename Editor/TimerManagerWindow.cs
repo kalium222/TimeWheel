@@ -1,111 +1,169 @@
 using System;
 using UnityEngine;
 using UnityEditor;
+using System.Collections.Generic;
 using Timer;
 
-public class TimerManagerWindow : EditorWindow
+namespace TimerManagerWindow
 {
-    bool groupEnabled;
-    public int ms, s, min, hour, day;
-    public int i_ms, i_s, i_min, i_hour, i_day;
-    public int times;
-
-    private bool m_foldAddTimer = true;
-
-    [MenuItem("Window/MyWindow/TimerManager")]
-    public static void ShowWindow()
+    public class TimerManagerWindow : EditorWindow
     {
-        EditorWindow.GetWindow(typeof(TimerManagerWindow));
-    }
+        // private field
+        // for displaying the fields correctly
+        private int m_id;
+        private int m_ms, m_s, m_min, m_hour, m_day;
+        private int m_interval_ms, m_interval_s, m_interval_min;
+        private int m_interval_hour, m_interval_day;
+        private int m_times;
+        private bool m_foldAddTimer = false;
+        private bool m_foldModifyTimer = false;
+        private Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
+        private int m_displayTimerSize = 15;
 
-    private void OnGUI()
-    {
-        GUILayout.Label ("Timer Manager", EditorStyles.boldLabel);
-
-        Timer.TimerManager instance = Timer.TimerManager.s_instance;
-        if ( instance==null ) 
+        private void MaintainQueue(Timer.Timer timer)
         {
-            GUILayout.Label("Enter Play mode to instantiate the Timer Manager.");
-            return;
+            m_addedTimerDisplayQueue.Enqueue(timer);
+            if ( m_addedTimerDisplayQueue.Count > m_displayTimerSize )
+                m_addedTimerDisplayQueue.Dequeue();
         }
 
-        EditorGUILayout.LabelField("isRunning:", instance.IsRunning.ToString());
-
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Start"))
+        [MenuItem("Window/MyWindow/TimerManager")]
+        public static void ShowWindow()
         {
-            if ( instance.StartRunning())
-                Debug.Log("Started TimerManager!");
-            else
-                Debug.Log("Instance have already been launched!");
+            GetWindow(typeof(TimerManagerWindow));
         }
-        EditorGUILayout.Space(5);
-        if (GUILayout.Button("Reset"))
+
+        private void OnGUI()
         {
-            instance.Reset();
-            Debug.Log("Reset TimerManager!");
-        }
-        EditorGUILayout.EndHorizontal();
+            GUILayout.Label ("Timer Manager", EditorStyles.boldLabel);
 
-        m_foldAddTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldAddTimer, "Add Timer");
-        if ( m_foldAddTimer )
-        {
-            GUILayout.Label("expire: ");
-            ms = EditorGUILayout.IntField("1/10s", ms);
-            s = EditorGUILayout.IntField("s", s);
-            min = EditorGUILayout.IntField("min", min);
-            hour = EditorGUILayout.IntField("hour", hour);
-            day = EditorGUILayout.IntField("day", day);
-            TimeSpan expire = new(day, hour, min, s, ms);
+            TimerManager instance = TimerManager.s_instance;
+            if ( instance==null ) 
+            {
+                GUILayout.Label("Enter Play mode to instantiate the Timer Manager.");
+                return;
+            }
 
-            GUILayout.Label("interval: ");
-            i_ms = EditorGUILayout.IntField("1/10s", i_ms);
-            i_s = EditorGUILayout.IntField("s", i_s);
-            i_min = EditorGUILayout.IntField("min", i_min);
-            i_hour = EditorGUILayout.IntField("hour", i_hour);
-            i_day = EditorGUILayout.IntField("day", i_day);
-            TimeSpan interval = new(i_day, i_hour, i_min, i_s, i_ms);
+            EditorGUILayout.LabelField("isRunning:", instance.IsRunning.ToString());
 
-            GUILayout.Label("times: ");
-            times = EditorGUILayout.IntField("times", times);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Start"))
+            {
+                if ( instance.StartRunning())
+                    Debug.Log("Started TimerManager!");
+                else
+                    Debug.Log("Instance have already been launched!");
+            }
+            EditorGUILayout.Space(5);
+            if (GUILayout.Button("Reset"))
+            {
+                instance.Reset();
+                Debug.Log("Reset TimerManager!");
+            }
+            EditorGUILayout.EndHorizontal();
+
+            m_foldAddTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldAddTimer, "Add Timer");
+            if ( m_foldAddTimer )
+            {
+                // close the Modify folder
+                m_foldModifyTimer = false;
+                GUILayout.Label("expire: ", EditorStyles.boldLabel);
+                m_ms = EditorGUILayout.IntField("ms", m_ms);
+                m_s = EditorGUILayout.IntField("s", m_s);
+                m_min = EditorGUILayout.IntField("min", m_min);
+                m_hour = EditorGUILayout.IntField("hour", m_hour);
+                m_day = EditorGUILayout.IntField("day", m_day);
+                TimeSpan expire = new(m_day, m_hour, m_min, m_s, m_ms);
+
+                GUILayout.Label("interval: ", EditorStyles.boldLabel);
+                m_interval_ms = EditorGUILayout.IntField("1/10s", m_interval_ms);
+                m_interval_s = EditorGUILayout.IntField("s", m_interval_s);
+                m_interval_min = EditorGUILayout.IntField("min", m_interval_min);
+                m_interval_hour = EditorGUILayout.IntField("hour", m_interval_hour);
+                m_interval_day = EditorGUILayout.IntField("day", m_interval_day);
+                TimeSpan interval = new(m_interval_day, m_interval_hour, m_interval_min, m_interval_s, m_interval_ms);
+
+                GUILayout.Label("times: ", EditorStyles.boldLabel);
+                m_times = EditorGUILayout.IntField("times", m_times);
             
-            if ( GUILayout.Button("Add"))
-            {
-                instance.AddTimer(expire, interval, (uint)times, ()=>{
-                    Debug.Log(DateTime.Now.Millisecond);
-                });
-                Debug.Log("Added a Timer!");
+                if ( GUILayout.Button("Add"))
+                {
+                    uint id = instance.AddTimer(expire, interval, (uint)m_times, ()=>{
+                        Debug.Log(DateTime.Now.Millisecond);
+                    });
+                    Debug.Log("Added a Timer!");
+                    MaintainQueue(instance.GetTimer(id));
+                }
             }
-        }
-        EditorGUILayout.EndFoldoutHeaderGroup();
+            EditorGUILayout.EndFoldoutHeaderGroup();
 
-        EditorGUILayout.LabelField("Timer Count: ", instance.Count.ToString());
-        
-        groupEnabled = EditorGUILayout.BeginToggleGroup ("Optional Settings", groupEnabled);
-        GUILayout.Label("toggle group!");
-        EditorGUILayout.EndToggleGroup ();
-
-        EditorGUILayout.LabelField("pressure test: ");
-        EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("100,000 and execute"))
-        {
-            // TODO: 
-
-        }
-        EditorGUILayout.Space(5);
-        if (GUILayout.Button("1000,000 add"))
-        {
-            // TODO: 
-        }
-        EditorGUILayout.EndHorizontal();
-
-        foreach (TimeWheel tw in instance.TimeWheelArray)
-        {
-            GUILayout.Label("TimerList: ");
-            foreach (int i in tw.GetDistri())
+            m_foldModifyTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldModifyTimer, "Modify Timer");
+            if ( m_foldModifyTimer )
             {
-                GUILayout.Label(i.ToString());
+                // close the Add folder
+                // TODO:
+                m_foldAddTimer = false;
+                GUILayout.Label("Id", EditorStyles.boldLabel);
+                m_id = EditorGUILayout.IntField("id: ", m_id);
+
+                GUILayout.Label("expire: ", EditorStyles.boldLabel);
+                m_ms = EditorGUILayout.IntField("ms", m_ms);
+                m_s = EditorGUILayout.IntField("s", m_s);
+                m_min = EditorGUILayout.IntField("min", m_min);
+                m_hour = EditorGUILayout.IntField("hour", m_hour);
+                m_day = EditorGUILayout.IntField("day", m_day);
+                TimeSpan expire = new(m_day, m_hour, m_min, m_s, m_ms);
+
+                GUILayout.Label("interval: ", EditorStyles.boldLabel);
+                m_interval_ms = EditorGUILayout.IntField("1/10s", m_interval_ms);
+                m_interval_s = EditorGUILayout.IntField("s", m_interval_s);
+                m_interval_min = EditorGUILayout.IntField("min", m_interval_min);
+                m_interval_hour = EditorGUILayout.IntField("hour", m_interval_hour);
+                m_interval_day = EditorGUILayout.IntField("day", m_interval_day);
+                TimeSpan interval = new(m_interval_day, m_interval_hour, m_interval_min, m_interval_s, m_interval_ms);
+
+                GUILayout.Label("times: ", EditorStyles.boldLabel);
+                m_times = EditorGUILayout.IntField("times", m_times);
+            
+                EditorGUILayout.BeginHorizontal();
+                if ( GUILayout.Button("Modify"))
+                {
+                    instance.ModifyTimer(id:(uint)m_id, expire, interval, (uint)m_times);
+                    Debug.Log("Modified a Timer by id: " + m_id.ToString() + "!");
+                }
+                if ( GUILayout.Button("Remove by id"))
+                {
+                    instance.RemoveTimer((uint)m_id);
+                    Debug.Log("Removed a Timer by id: " + m_id.ToString() + "!");
+                }
+                EditorGUILayout.EndHorizontal();
             }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+
+            EditorGUILayout.BeginVertical();
+            foreach ( Timer.Timer t in m_addedTimerDisplayQueue )
+            {
+                GUILayout.Label("Id: " + t.Id + ", at " + t.expire.ToString());
+            }
+            EditorGUILayout.EndVertical();
+
+            EditorGUILayout.LabelField("Timer Count: ", instance.Count.ToString());
+
+            EditorGUILayout.LabelField("pressure test: ", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("100,000 and execute"))
+            {
+                // TODO: 
+                Debug.Log("TODO!");
+            }
+            EditorGUILayout.Space(5);
+            if (GUILayout.Button("1000,000 add"))
+            {
+                // TODO: 
+                Debug.Log("TODO");
+            }
+            EditorGUILayout.EndHorizontal();
+
         }
     }
 }
