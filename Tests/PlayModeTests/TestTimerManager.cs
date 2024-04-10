@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
-using Timer;
 using NUnit.Framework.Internal;
+using Timer;
 
-public class TestTimerManager
+public class TestTimer
 {
     // Test helper classes
 
@@ -163,14 +163,20 @@ public class TestTimerManager
         }
     }
 
-    // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    // `yield return null;` to skip a frame.
+}
+
+public class TestTimerManager
+{
     [UnityTest]
     public IEnumerator TestTimerManagerWithEnumeratorPasses()
     {
-        // Use the Assert class to test conditions.
-        // Use yield to skip a frame.
-        Assert.IsTrue(true);
+        GameObject timerManagerObject = new();
+        Assert.IsNull(TimerManager.s_instance);
+
+        timerManagerObject.AddComponent<TimerManager>();
+        yield return null;
+        TimerManager instance = TimerManager.s_instance;
+        Assert.IsNotNull(instance);
         yield return null;
     }
 }
