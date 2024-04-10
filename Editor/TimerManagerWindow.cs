@@ -36,6 +36,7 @@ namespace TimerManagerWindow
         private void OnGUI()
         {
             GUILayout.Label ("Timer Manager", EditorStyles.boldLabel);
+            GUILayout.Space(10);
 
             TimerManager instance = TimerManager.s_instance;
             if ( instance==null ) 
@@ -45,6 +46,7 @@ namespace TimerManagerWindow
             }
 
             EditorGUILayout.LabelField("isRunning:", instance.IsRunning.ToString());
+            GUILayout.Space(10);
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Start"))
@@ -61,6 +63,7 @@ namespace TimerManagerWindow
                 Debug.Log("Reset TimerManager!");
             }
             EditorGUILayout.EndHorizontal();
+            GUILayout.Space(10);
 
             m_foldAddTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldAddTimer, "Add Timer");
             if ( m_foldAddTimer )
@@ -96,6 +99,7 @@ namespace TimerManagerWindow
                 }
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
+            GUILayout.Space(10);
 
             m_foldModifyTimer = EditorGUILayout.BeginFoldoutHeaderGroup(m_foldModifyTimer, "Modify Timer");
             if ( m_foldModifyTimer )
@@ -139,15 +143,17 @@ namespace TimerManagerWindow
                 EditorGUILayout.EndHorizontal();
             }
             EditorGUILayout.EndFoldoutHeaderGroup();
+            GUILayout.Space(10);
 
+            GUILayout.Label("Latest timers: ", EditorStyles.boldLabel);
             EditorGUILayout.BeginVertical();
             foreach ( Timer.Timer t in m_addedTimerDisplayQueue )
             {
                 GUILayout.Label("Id: " + t.Id + ", at " + t.expire.ToString());
             }
             EditorGUILayout.EndVertical();
-
             EditorGUILayout.LabelField("Timer Count: ", instance.Count.ToString());
+            GUILayout.Space(10);
 
             EditorGUILayout.LabelField("pressure test: ", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
