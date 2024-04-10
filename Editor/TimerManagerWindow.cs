@@ -124,7 +124,8 @@ namespace TimerManagerWindow
                 m_interval_min = EditorGUILayout.IntField("min", m_interval_min);
                 m_interval_hour = EditorGUILayout.IntField("hour", m_interval_hour);
                 m_interval_day = EditorGUILayout.IntField("day", m_interval_day);
-                TimeSpan interval = new(m_interval_day, m_interval_hour, m_interval_min, m_interval_s, m_interval_ms);
+                TimeSpan interval = new(m_interval_day, m_interval_hour, 
+                        m_interval_min, m_interval_s, m_interval_ms);
 
                 GUILayout.Label("times: ", EditorStyles.boldLabel);
                 m_times = EditorGUILayout.IntField("times", m_times);
@@ -149,7 +150,8 @@ namespace TimerManagerWindow
             EditorGUILayout.BeginVertical();
             foreach ( Timer.Timer t in m_addedTimerDisplayQueue )
             {
-                GUILayout.Label("Id: " + t.Id + ", at " + t.expire.ToString());
+                string message = "Id: " + t.Id + ", expire: " + t.expire.ToString();
+                GUILayout.Label(message);
             }
             EditorGUILayout.EndVertical();
             EditorGUILayout.LabelField("Timer Count: ", instance.Count.ToString());

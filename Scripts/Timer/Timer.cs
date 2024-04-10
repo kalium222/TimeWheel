@@ -31,7 +31,7 @@ namespace Timer
             this.expire = expire;
             interval = new();
             times = 1;
-            this.callback += callback;
+            this.callback = callback;
         }
 
         public Timer(uint id, TimeSpan expire, TimeSpan interval, 
@@ -41,7 +41,7 @@ namespace Timer
             this.expire = expire;
             this.interval = interval;
             this.times = times;
-            this.callback += callback;
+            this.callback = callback;
         }
 
         public void Destroy()

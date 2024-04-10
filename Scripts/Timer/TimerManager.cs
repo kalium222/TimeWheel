@@ -174,7 +174,7 @@ namespace Timer
                 Timer t = temp.First;
                 t.Callback();
                 if ( t.times <= 1 )
-                    this.RemoveTimer(t);
+                    this.DetachTimerFromWheel(t);
                 else 
                 {
                     this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
@@ -218,10 +218,7 @@ namespace Timer
             }
         }
 
-        public bool IsRunning
-        {
-            get { return !m_stop; }
-        }
+        public bool IsRunning => !m_stop;
 
         public Timer GetTimer(uint id)
         {
@@ -269,15 +266,14 @@ namespace Timer
         // 根据时间把timer加入合适的timewheel
         public uint AddTimer(TimeSpan expire, TimeSpan interval, uint times, Action task)
         {
-            Timer newTimer = new(GetAvaliableId(), expire, interval, times, task);
-            this.AddTimer(newTimer);
-            return newTimer.Id;
+            Timer timer = new(GetAvaliableId(), expire, interval, times, task);
+            m_timerTable.TryAdd(timer.Id, timer);
+            AddTimerToWheel(timer);
+            return timer.Id;
         }
 
-        public void AddTimer(Timer timer)
+        private void AddTimerToWheel(Timer timer)
         {
-            timer.Id = GetAvaliableId();
-            m_timerTable.TryAdd(timer.Id, timer);
             TimeSpan idx = timer.expire - GetCurrentTime();
             if ( timer.expire <= GetCurrentTime() )
                 m_timeWheelArray.First().AddTimer(timer);
@@ -296,32 +292,30 @@ namespace Timer
             }
         }
 
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? RemoveTimer(Timer timer)
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        // only detach a timer in the wheel
+        // should be call by RemoveTimer()
+        // or Modify() or Refresh()
+        private void DetachTimerFromWheel(Timer timer)
         {
-            m_timerTable.TryRemove(timer.Id, out Timer res);
             TimerList.Detach(timer);
-            return res;
         }
 
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? RemoveTimer(uint id)
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        // Remove a timer from dictionary;
+        // Detach it from wheel
+        // return false if it doesn't exist in the dictionary
+        public bool RemoveTimer(uint id)
         {
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-            Timer? timer = m_timerTable[id];
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-            m_timerTable.TryRemove(id, out timer);
-            TimerList.Detach(timer);
-            return timer;
+            bool state = m_timerTable.TryRemove(id, out Timer timer);
+            DetachTimerFromWheel(timer);
+            return state;
         }
 
-        public int RefreshTimer(Timer timer)
+        // Refresh the position of a timer
+        // if it should be move to a lower wheel
+        public void RefreshTimer(Timer timer)
         {
-            this.RemoveTimer(timer);
-            this.AddTimer(timer);
-            return 0;
+            DetachTimerFromWheel(timer);
+            AddTimerToWheel(timer);
         }
 
         public int ModifyTimer(Timer timer, TimeSpan expire, TimeSpan interval, uint times)
