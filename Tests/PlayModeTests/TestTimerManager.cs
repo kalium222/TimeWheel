@@ -167,16 +167,43 @@ public class TestTimer
 
 public class TestTimerManager
 {
-    [UnityTest]
-    public IEnumerator TestTimerManagerWithEnumeratorPasses()
+    [SetUp]
+    public void SetUpTimerManagerComponent()
     {
         GameObject timerManagerObject = new();
-        Assert.IsNull(TimerManager.s_instance);
-
         timerManagerObject.AddComponent<TimerManager>();
-        yield return null;
         TimerManager instance = TimerManager.s_instance;
         Assert.IsNotNull(instance);
+    }
+
+    [TearDown]
+    public void TearDownTimerManagerComponent()
+    {
+        TimerManager.s_instance.Reset();
+    }
+
+    [UnityTest]
+    public IEnumerator TestTimerManagerGetTimer()
+    {
+        TimerManager instance = TimerManager.s_instance;
+        System.Random rd = new();
+        for (int i=0; i<100; i++)
+        {
+            Assert.IsNull(instance.GetTimer((uint)rd.Next(0, 10000000)));
+        }
+        yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator TestTimerManagerModify()
+    {
+        TimerManager instance = TimerManager.s_instance;
+        System.Random rd = new();
+        for (int i=0; i<100; i++)
+        {
+            Assert.IsFalse(instance.ModifyTimer(
+                        (uint)rd.Next(0, 1000000000), new(), new(), 1));
+        }
         yield return null;
     }
 }

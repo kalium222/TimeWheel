@@ -18,7 +18,7 @@ namespace TimerManagerWindow
         private bool m_foldAddTimer = false;
         private bool m_foldModifyTimer = false;
         private Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
-        private int m_displayTimerSize = 15;
+        private const int m_displayTimerSize = 15;
 
         private void MaintainQueue(Timer.Timer timer)
         {
