@@ -220,9 +220,13 @@ namespace Timer
 
         public bool IsRunning => !m_stop;
 
-        public Timer GetTimer(uint id)
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+        public Timer? GetTimer(uint id)
+#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         {
-            return m_timerTable[id];
+            if ( !m_timerTable.TryGetValue(id, out Timer timer) )
+                return null;
+            return timer;
         }
 
         public List<int> GetDistri()
@@ -264,7 +268,8 @@ namespace Timer
 
         // 把timer加入Dictionary
         // 根据时间把timer加入合适的timewheel
-        public uint AddTimer(TimeSpan expire, TimeSpan interval, uint times, Action task)
+        public uint AddTimer(TimeSpan expire, TimeSpan interval,
+                                uint times, Action task)
         {
             Timer timer = new(GetAvaliableId(), expire, interval, times, task);
             m_timerTable.TryAdd(timer.Id, timer);
@@ -312,26 +317,29 @@ namespace Timer
 
         // Refresh the position of a timer
         // if it should be move to a lower wheel
-        public void RefreshTimer(Timer timer)
+        private void RefreshTimer(Timer timer)
         {
             DetachTimerFromWheel(timer);
             AddTimerToWheel(timer);
         }
 
-        public int ModifyTimer(Timer timer, TimeSpan expire, TimeSpan interval, uint times)
+        private void ModifyTimer(Timer timer, TimeSpan expire, 
+                                    TimeSpan interval, uint times)
         {
             timer.expire = expire;
             timer.interval = interval;
             timer.times = times;
-            this.RefreshTimer(timer);
-            return 0;
+            RefreshTimer(timer);
         }
 
-        public int ModifyTimer(uint id, TimeSpan expire, TimeSpan interval, uint times)
+        // return false if it doesn't contain the key
+        public bool ModifyTimer(uint id, TimeSpan expire,
+                                    TimeSpan interval, uint times)
         {
             Timer modified = GetTimer(id);
-            this.ModifyTimer(modified, expire, interval, times);
-            return 0;
+            if ( modified==null ) return false;
+            ModifyTimer(modified, expire, interval, times);
+            return true;
         }
 
         public void Reset()

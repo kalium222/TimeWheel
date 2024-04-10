@@ -105,7 +105,6 @@ namespace TimerManagerWindow
             if ( m_foldModifyTimer )
             {
                 // close the Add folder
-                // TODO:
                 m_foldAddTimer = false;
                 GUILayout.Label("Id", EditorStyles.boldLabel);
                 m_id = EditorGUILayout.IntField("id: ", m_id);
@@ -133,13 +132,17 @@ namespace TimerManagerWindow
                 EditorGUILayout.BeginHorizontal();
                 if ( GUILayout.Button("Modify"))
                 {
-                    instance.ModifyTimer(id:(uint)m_id, expire, interval, (uint)m_times);
-                    Debug.Log("Modified a Timer by id: " + m_id.ToString() + "!");
+                    if (instance.ModifyTimer(id:(uint)m_id, expire, interval, (uint)m_times))
+                        Debug.Log("Modified a Timer by id: " + m_id.ToString() + "!");
+                    else
+                        Debug.Log("No such key!");
                 }
                 if ( GUILayout.Button("Remove by id"))
                 {
-                    instance.RemoveTimer((uint)m_id);
-                    Debug.Log("Removed a Timer by id: " + m_id.ToString() + "!");
+                    if (instance.RemoveTimer((uint)m_id))
+                        Debug.Log("Removed a Timer by id: " + m_id.ToString() + "!");
+                    else
+                        Debug.Log("No such key!");
                 }
                 EditorGUILayout.EndHorizontal();
             }
@@ -151,6 +154,8 @@ namespace TimerManagerWindow
             foreach ( Timer.Timer t in m_addedTimerDisplayQueue )
             {
                 string message = "Id: " + t.Id + ", expire: " + t.expire.ToString();
+                if ( instance.GetTimer(t.Id)==null )
+                    message += ", deleted!";
                 GUILayout.Label(message);
             }
             EditorGUILayout.EndVertical();
