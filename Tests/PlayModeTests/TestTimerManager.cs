@@ -202,7 +202,7 @@ public class TestTimerManager
         for (int i=0; i<100; i++)
         {
             Assert.IsFalse(instance.ModifyTimer(
-                        (uint)rd.Next(0, 1000000000), new(), new(), 1));
+                        (uint)rd.Next(0, 1000000000), new(), new(), 1, ()=>{}));
         }
         yield return null;
     }

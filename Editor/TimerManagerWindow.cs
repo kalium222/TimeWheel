@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using Timer;
+using NUnit.Framework.Internal;
 
 namespace TimerManagerWindow
 {
@@ -17,14 +18,41 @@ namespace TimerManagerWindow
         private int m_times;
         private bool m_foldAddTimer = false;
         private bool m_foldModifyTimer = false;
-        private Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
+        private readonly Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
         private const int m_displayTimerSize = 15;
+        private const int k_pressExecute = 10_0000;
+        private const int k_pressAdd = 100_0000;
 
         private void MaintainQueue(Timer.Timer timer)
         {
             m_addedTimerDisplayQueue.Enqueue(timer);
             if ( m_addedTimerDisplayQueue.Count > m_displayTimerSize )
                 m_addedTimerDisplayQueue.Dequeue();
+        }
+
+        private TimeSpan GetRandomTimeSpan()
+        {
+            System.Random rd = new();
+            return new TimeSpan(0, 0, 0, rd.Next(0, 10), rd.Next(0, 1000));
+        }
+
+        private uint GetRandomTimes()
+        {
+            System.Random rd = new();
+            return (uint)rd.Next(1, 5);
+        }
+
+        private void AddRandomTimer(int index)
+        {
+            TimerManager instance = TimerManager.s_instance;
+            TimeSpan expire = GetRandomTimeSpan();
+            TimeSpan interval = GetRandomTimeSpan();
+            uint times = (uint)GetRandomTimes();
+            Debug.Log("Generageted expire: " + expire + ", interval: " + interval + ", times: " + times);
+            instance.AddTimer(expire, interval, times, ()=>{
+                // TODO: callback
+                Debug.Log("The " + index + "th task, at " + expire.Seconds + ", interval: " + interval.Seconds + ", times: " + times);
+            });
         }
 
         [MenuItem("Window/MyWindow/TimerManager")]
@@ -132,7 +160,8 @@ namespace TimerManagerWindow
                 EditorGUILayout.BeginHorizontal();
                 if ( GUILayout.Button("Modify"))
                 {
-                    if (instance.ModifyTimer(id:(uint)m_id, expire, interval, (uint)m_times))
+                    if (instance.ModifyTimer(id:(uint)m_id, expire, interval,
+                                                    (uint)m_times, ()=>{}))
                         Debug.Log("Modified a Timer by id: " + m_id.ToString() + "!");
                     else
                         Debug.Log("No such key!");
@@ -166,14 +195,16 @@ namespace TimerManagerWindow
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("100,000 and execute"))
             {
-                // TODO: 
-                Debug.Log("TODO!");
+                for (int i=0; i<k_pressExecute; i++)
+                {
+                    AddRandomTimer(i);
+                }
             }
             EditorGUILayout.Space(5);
             if (GUILayout.Button("1000,000 add"))
             {
-                // TODO: 
-                Debug.Log("TODO");
+                for (int i=0; i<k_pressAdd; i++)
+                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), ()=>{});
             }
             EditorGUILayout.EndHorizontal();
 

@@ -174,11 +174,11 @@ namespace Timer
                 Timer t = temp.First;
                 t.Callback();
                 if ( t.times <= 1 )
-                    this.DetachTimerFromWheel(t);
+                    RemoveTimer(t.Id);
                 else 
                 {
                     this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
-                        t.interval, t.times-1);
+                        t.interval, t.times-1, t.callback);
                 }
             }
             bool carry = true;
@@ -269,9 +269,9 @@ namespace Timer
         // 把timer加入Dictionary
         // 根据时间把timer加入合适的timewheel
         public uint AddTimer(TimeSpan expire, TimeSpan interval,
-                                uint times, Action task)
+                                uint times, Action callback)
         {
-            Timer timer = new(GetAvaliableId(), expire, interval, times, task);
+            Timer timer = new(GetAvaliableId(), expire, interval, times, callback);
             m_timerTable.TryAdd(timer.Id, timer);
             AddTimerToWheel(timer);
             return timer.Id;
@@ -323,22 +323,23 @@ namespace Timer
             AddTimerToWheel(timer);
         }
 
-        private void ModifyTimer(Timer timer, TimeSpan expire, 
-                                    TimeSpan interval, uint times)
+        private void ModifyTimer(Timer timer, TimeSpan expire, TimeSpan interval,
+                                     uint times, Action callback)
         {
             timer.expire = expire;
             timer.interval = interval;
             timer.times = times;
+            timer.callback = callback;
             RefreshTimer(timer);
         }
 
         // return false if it doesn't contain the key
-        public bool ModifyTimer(uint id, TimeSpan expire,
-                                    TimeSpan interval, uint times)
+        public bool ModifyTimer(uint id, TimeSpan expire, TimeSpan interval,
+                                    uint times, Action callback)
         {
             Timer modified = GetTimer(id);
             if ( modified==null ) return false;
-            ModifyTimer(modified, expire, interval, times);
+            ModifyTimer(modified, expire, interval, times, callback);
             return true;
         }
 
