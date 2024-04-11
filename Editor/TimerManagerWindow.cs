@@ -23,6 +23,8 @@ namespace TimerManagerWindow
         private const int k_pressExecute = 10_0000;
         private const int k_pressAdd = 100_0000;
 
+        public Action test = () => {};
+
         private void MaintainQueue(Timer.Timer timer)
         {
             m_addedTimerDisplayQueue.Enqueue(timer);
@@ -197,14 +199,15 @@ namespace TimerManagerWindow
             {
                 for (int i=0; i<k_pressExecute; i++)
                 {
-                    AddRandomTimer(i);
+                    // AddRandomTimer(i);
+                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
                 }
             }
             EditorGUILayout.Space(5);
             if (GUILayout.Button("1000,000 add"))
             {
                 for (int i=0; i<k_pressAdd; i++)
-                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), ()=>{});
+                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
             }
             EditorGUILayout.EndHorizontal();
 
