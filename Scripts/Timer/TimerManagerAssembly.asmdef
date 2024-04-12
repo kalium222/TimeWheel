@@ -1,3 +1,16 @@
 {
-	"name": "TimerManagerAssembly"
+    "name": "TimerManagerAssembly",
+    "rootNamespace": "",
+    "references": [
+        "GUID:a41cdfcb642563b97ad5dfa884b02c50"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

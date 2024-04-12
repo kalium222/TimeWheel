@@ -4,7 +4,7 @@ public abstract class ObjectPool<T> where T : new()
 {
     private readonly LinkedList<T> m_AvailableList;
     private const int k_level = 1000;
-    
+
     // async?
     public ObjectPool(int initCount)
     {
@@ -14,9 +14,7 @@ public abstract class ObjectPool<T> where T : new()
             m_AvailableList.AddLast(new T());
         }
     }
-
     protected abstract T Create(); 
-
     public T GetObject()
     {
         if ( m_AvailableList.Count < k_level )

@@ -4,6 +4,7 @@
 # except
 !Scripts/
 !Scripts/Timer
+!Scripts/Utils
 !Editor/
 !Tests/
 !Tests/PlayModeTests

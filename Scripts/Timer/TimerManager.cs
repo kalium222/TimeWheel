@@ -6,6 +6,16 @@ using UnityEngine;
 
 namespace Timer
 {
+    public class TimerPool : ObjectPool<Timer>
+    {
+        public TimerPool(int initCount) : base(initCount) {}
+
+        protected override Timer Create()
+        {
+            return new();
+        }
+    }
+
     public class TimeWheel
     {
         // private field
