@@ -19,8 +19,8 @@ namespace Timer
         public Timer()
         {
             m_id = 0;
-            expire = new();
-            interval = new();
+            expire = 0;
+            interval = 0;
             times = 1;
             callback = () => {};
         }
@@ -29,7 +29,7 @@ namespace Timer
         {
             m_id = id;
             this.expire = (uint)expire.TotalMilliseconds;
-            interval = new();
+            interval = 0;
             times = 1;
             this.callback = callback;
         }

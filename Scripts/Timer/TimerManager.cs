@@ -137,7 +137,6 @@ namespace Timer
             {
                 Tick();
                 m_current += TimerConstants.k_DeltaTime;
-                m_currentTick++;
             }
         }
 
@@ -149,11 +148,11 @@ namespace Timer
             TimerList temp;
             for (int i=m_timeWheelArray.Count-1; i>0; i--) // 向下移动
             {
-                temp = m_timeWheelArray[i].GetCurrentTimerList();
+                temp = m_timeWheelArray[i].BucketArray[Index(i)];
                 while (temp.First!=null) RefreshTimer(temp.First);
             }
             // do tasks
-            temp = m_timeWheelArray[0].GetCurrentTimerList();
+            temp = m_timeWheelArray[0].BucketArray[m_currentTick&TimerConstants.k_TWRootMask];
             while (temp.First!=null) 
             {
                 Timer t = temp.First;
@@ -162,17 +161,11 @@ namespace Timer
                     RemoveTimer(t.Id);
                 else 
                 {
-                    this.ModifyTimer(t, t.interval+this.GetCurrentTime(),
+                    this.ModifyTimer(t, t.interval+m_currentTick,
                         t.interval, t.times-1, t.callback);
                 }
             }
-            bool carry = true;
-            foreach ( TimeWheel tw in m_timeWheelArray )
-            {
-                if ( !carry )
-                    break;
-                carry = tw.Tick();
-            }
+            m_currentTick++;
         }
 
         private uint GetAvaliableId()
@@ -182,6 +175,11 @@ namespace Timer
             while ( m_timerTable.ContainsKey(m_maxId) )
                 m_maxId++;
             return m_maxId;
+        }
+
+        private int Index(int n)
+        {
+            return (int)((m_currentTick >> (TimerConstants.k_TWRootBits + (n-1) * TimerConstants.k_TWBits)) & TimerConstants.k_TWMask);
         }
 
         public List<TimeWheel> TimeWheelArray => m_timeWheelArray;
@@ -252,10 +250,10 @@ namespace Timer
                                 uint times, Action callback)
         {
             Timer timer = m_timerPool.GetObject();
-            timer.Id = GetAvaliableId();
             timer.Span2Uint(expire, interval);
             timer.times = times;
             timer.callback = callback;
+            timer.Id = GetAvaliableId();
             m_timerTable.TryAdd(timer.Id, timer);
             AddTimerToWheel(timer);
             return timer.Id;
@@ -263,22 +261,23 @@ namespace Timer
 
         private void AddTimerToWheel(Timer timer)
         {
-            uint idx = timer.expire - m_currentTick;
-            if ( idx <= 0 )
-                m_timeWheelArray.First().AddTimer(timer);
-            else if ( idx >= GetMaxTime() )
-                m_timeWheelArray.Last().AddTimer(timer);
+            ulong idx = timer.expire - m_currentTick;
+            TimerList target;
+            if ( (long)idx <= 0 )
+                target = m_timeWheelArray[0].BucketArray[((m_currentTick & TimerConstants.k_TWRootMask) + 1)%TimerConstants.k_TWRootSize];
+            else if (idx < TimerConstants.k_TWRootSize)
+                target = m_timeWheelArray[0].BucketArray[timer.expire & TimerConstants.k_TWRootMask];
+            else if (idx < 1 << (TimerConstants.k_TWRootBits+TimerConstants.k_TWBits))
+                target = m_timeWheelArray[1].BucketArray[timer.expire>>(TimerConstants.k_TWRootBits) & TimerConstants.k_TWMask];
+            else if (idx < 1 << (TimerConstants.k_TWRootBits+2*TimerConstants.k_TWBits))
+                target = m_timeWheelArray[2].BucketArray[timer.expire>>(TimerConstants.k_TWRootBits+TimerConstants.k_TWBits) & TimerConstants.k_TWMask];
+            else if (idx < 1 << (TimerConstants.k_TWRootBits+3*TimerConstants.k_TWBits))
+                target = m_timeWheelArray[3].BucketArray[timer.expire>>(TimerConstants.k_TWRootBits+TimerConstants.k_TWBits*2) & TimerConstants.k_TWMask];
+            else if (idx < 1 << (TimerConstants.k_TWRootBits+4*TimerConstants.k_TWBits))
+                target = m_timeWheelArray[4].BucketArray[timer.expire>>(TimerConstants.k_TWRootBits+TimerConstants.k_TWBits*3) & TimerConstants.k_TWMask];
             else
-            {
-                foreach ( TimeWheel tw in m_timeWheelArray )
-                {
-                    if ( idx < tw.MaxTimeSpan )
-                    {
-                        tw.AddTimer(timer);
-                        break;
-                    }
-                }
-            }
+                target = m_timeWheelArray[4].BucketArray[TimerConstants.k_TWSize-1];
+            target.Add(timer);
         }
 
         // only detach a timer in the wheel
@@ -312,7 +311,7 @@ namespace Timer
             AddTimerToWheel(timer);
         }
 
-        private void ModifyTimer(Timer timer, TimeSpan expire, TimeSpan interval,
+        private void ModifyTimer(Timer timer, uint expire, uint interval,
                                      uint times, Action callback)
         {
             timer.expire = expire;
@@ -328,13 +327,15 @@ namespace Timer
         {
             Timer modified = GetTimer(id);
             if ( modified==null ) return false;
-            ModifyTimer(modified, expire, interval, times, callback);
+            ModifyTimer(modified, 0, 0, times, callback);
+            modified.Span2Uint(expire, interval);
             return true;
         }
 
         public void Reset()
         {
             m_stop = true;
+            m_currentTick = 0;
             foreach ( TimeWheel tw in m_timeWheelArray )
             {
                 foreach ( TimerList l in tw.BucketArray )

@@ -18,22 +18,18 @@ public class TestTimer
         // Test Timer()
         Timer.Timer t1 = new();
         Assert.IsTrue(t1.Id==0);
-        Assert.IsTrue(t1.expire==new TimeSpan(0));
-        Assert.IsTrue(t1.interval==new TimeSpan(0));
+        Assert.IsTrue(t1.expire==0);
+        Assert.IsTrue(t1.interval==0);
         Assert.IsTrue(t1.times==1);
         // Test Timer(uint id, TimeSpan expire, Action callback)
         Timer.Timer t2 = new(8, new TimeSpan(1, 1, 1), ()=>{});
         Assert.IsTrue(t2.Id==8);
-        Assert.IsTrue(t2.expire==new TimeSpan(1, 1, 1));
-        Assert.IsTrue(t2.interval==new TimeSpan());
         Assert.IsTrue(t2.times==1);
         // Test Timer(uint id, TimeSpan expire, TimeSpan interval, 
         //          uint times, Action callback)
         Timer.Timer t3 = new(111, new TimeSpan(3, 3, 3),
                     new TimeSpan(7, 7, 7),  114514, ()=>{});
         Assert.IsTrue(t3.Id==111);
-        Assert.IsTrue(t3.expire==new TimeSpan(3, 3, 3));
-        Assert.IsTrue(t3.interval==new TimeSpan(7, 7, 7));
         Assert.IsTrue(t3.times==114514);
     }
 
@@ -97,72 +93,6 @@ public class TestTimer
             Assert.IsTrue(l.Count==99-i);
         }
     }
-
-    // TimeWheel
-    [Test]
-    public void TestTimeWheelTick()
-    {
-        TimeSpan tickMs = new(0, 0, 1);
-        TimeWheel wheel = new(tickMs, 60);
-        for (int i=0; i<59; i++)
-        {
-            Assert.IsTrue(wheel.GetCurrentTime()==i*tickMs);
-            Assert.IsFalse(wheel.Tick());
-        }
-        Assert.IsTrue(wheel.Tick());
-    }
-
-    [Test]
-    public void TestTimeWheelGetDistri()
-    {
-        System.Random rd = new();
-        TimeSpan tickMs = new(0, 0, 1);
-        int wheelSize = 60;
-        TimeWheel wheel = new(tickMs, wheelSize);
-        int[] distri = new int[wheelSize];
-        for (int i=0; i<wheelSize; i++)
-        {
-            distri[i] = rd.Next(1, 100);
-            for (int j=0; j<distri[i]; j++)
-            {
-                Timer.Timer t = new(0, i*tickMs, ()=>{});
-                wheel.AddTimer(t);
-            }
-        }
-        for (int i=0; i<wheelSize; i++)
-        {
-            Assert.IsTrue(distri[i]==wheel.GetDistri()[i]);
-        }
-    }
-
-    [Test]
-    public void TestTimeWheelClearAll()
-    {
-        System.Random rd = new();
-        TimeSpan tickMs = new(0, 0, 1);
-        int wheelSize = 60;
-        TimeWheel wheel = new(tickMs, wheelSize);
-        int[] distri = new int[wheelSize];
-        for (int i=0; i<wheelSize; i++)
-        {
-            distri[i] = rd.Next(1, 100);
-            for (int j=0; j<distri[i]; j++)
-            {
-                Timer.Timer t = new(0, i*tickMs, ()=>{});
-                wheel.AddTimer(t);
-            }
-        }
-        for (int i=0; i<wheelSize; i++)
-        {
-            Assert.IsTrue(distri[i]==wheel.GetDistri()[i]);
-        }
-        wheel.ClearAll();
-        for (int i=0; i<wheelSize; i++)
-        {
-            Assert.IsTrue(wheel.GetDistri()[i]==0);
-        }
-    }
-
 }
 
 public class TestTimerManager

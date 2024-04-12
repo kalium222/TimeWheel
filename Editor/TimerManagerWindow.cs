@@ -4,6 +4,7 @@ using UnityEditor;
 using System.Collections.Generic;
 using Timer;
 using NUnit.Framework.Internal;
+using System.Data.Common;
 
 namespace TimerManagerWindow
 {
@@ -27,6 +28,8 @@ namespace TimerManagerWindow
 
         private void MaintainQueue(Timer.Timer timer)
         {
+            if (m_addedTimerDisplayQueue.Contains(timer))
+                return;
             m_addedTimerDisplayQueue.Enqueue(timer);
             if ( m_addedTimerDisplayQueue.Count > m_displayTimerSize )
                 m_addedTimerDisplayQueue.Dequeue();
@@ -207,10 +210,23 @@ namespace TimerManagerWindow
             if (GUILayout.Button("1000,000 add"))
             {
                 for (int i=0; i<k_pressAdd; i++)
-                    // instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
-                    instance.AddTimer(new(), new(), new(), test);
+                {
+                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
+                }
             }
             EditorGUILayout.EndHorizontal();
+
+            #if TIMER_MANAGER_DEBUG 
+            foreach (var tw in instance.TimeWheelArray)
+            {
+                if (tw == instance.TimeWheelArray[0])
+                    continue;
+                foreach (var l in tw.BucketArray)
+                {
+                    GUILayout.Label(l.Count.ToString());
+                }
+            }
+            #endif
 
         }
     }
