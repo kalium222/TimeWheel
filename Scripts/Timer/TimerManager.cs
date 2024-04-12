@@ -178,7 +178,7 @@ namespace Timer
             for (int i=m_timeWheelArray.Count-1; i>0; i--) // 向下移动
             {
                 temp = m_timeWheelArray[i].GetCurrentTimerList();
-                while (temp.First!=null) this.RefreshTimer(temp.First);
+                while (temp.First!=null) RefreshTimer(temp.First);
             }
             // do tasks
             temp = m_timeWheelArray[0].GetCurrentTimerList();
