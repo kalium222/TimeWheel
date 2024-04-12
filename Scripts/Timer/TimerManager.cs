@@ -93,6 +93,8 @@ namespace Timer
             }
         }
 
+        public TimerList[] BucketArray => m_bucketArray;
+
         public int Count 
         {
             get
@@ -115,8 +117,9 @@ namespace Timer
         public static TimerManager? s_instance;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         // timespan for one tick, 1ms
-        public TimeSpan deltaTime;
+        public readonly TimeSpan deltaTime = new(0, 0, 0, 0, 1);
 
+        private TimerPool m_timerPool;
         // private field
         // 由小到大
         // array[0] -> ms, array[1] -> s, ...
@@ -142,6 +145,7 @@ namespace Timer
 
         private void Init()
         {
+            m_timerPool = new(10000);
             m_timeWheelArray = new List<TimeWheel>
             {
                 // ms, s, min, hour, day
@@ -151,7 +155,6 @@ namespace Timer
                 new(new TimeSpan(0, 1, 0), 24),
                 new(new TimeSpan(1, 0, 0), 50)
             };
-            deltaTime = new TimeSpan(0, 0, 0, 0, 1);
             m_timerTable = new ConcurrentDictionary<uint, Timer>();
             m_current = DateTime.Now;
         }
@@ -276,12 +279,18 @@ namespace Timer
             return m_timeWheelArray.Last().MaxTimeSpan;
         }
 
+        // Get timer from pool
         // 把timer加入Dictionary
         // 根据时间把timer加入合适的timewheel
         public uint AddTimer(TimeSpan expire, TimeSpan interval,
                                 uint times, Action callback)
         {
-            Timer timer = new(GetAvaliableId(), expire, interval, times, callback);
+            Timer timer = m_timerPool.GetObject();
+            timer.Id = GetAvaliableId();
+            timer.expire = expire;
+            timer.interval = interval;
+            timer.times = times;
+            timer.callback = callback;
             m_timerTable.TryAdd(timer.Id, timer);
             AddTimerToWheel(timer);
             return timer.Id;
@@ -317,11 +326,16 @@ namespace Timer
 
         // Remove a timer from dictionary;
         // Detach it from wheel
+        // Return the timer to the pool
         // return false if it doesn't exist in the dictionary
         public bool RemoveTimer(uint id)
         {
             bool state = m_timerTable.TryRemove(id, out Timer timer);
-            DetachTimerFromWheel(timer);
+            if (state)
+            {
+                DetachTimerFromWheel(timer);
+                m_timerPool.ReturnObject(timer);
+            }
             return state;
         }
 
@@ -356,10 +370,18 @@ namespace Timer
         public void Reset()
         {
             m_stop = true;
-            m_timerTable.Clear();
             foreach ( TimeWheel tw in m_timeWheelArray )
-                tw.ClearAll();
-        }
+            {
+                foreach ( TimerList l in tw.BucketArray )
+                {
+                    while ( l.First != null )
+                    {
+                        Timer t = l.First;
+                        RemoveTimer(t.Id);
+                    }
+                }
+            }
+         }
 
     }
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 public abstract class ObjectPool<T> where T : new()
 {
     private readonly LinkedList<T> m_AvailableList;
-    private const int k_level = 1000;
+    private const int k_level = 1_0000;
 
     // async?
     public ObjectPool(int initCount)
@@ -20,10 +20,15 @@ public abstract class ObjectPool<T> where T : new()
         if ( m_AvailableList.Count < k_level )
         {
             for (int i=0; i<k_level; i++)
-                Create();
+                m_AvailableList.AddLast(Create());
         }
         T result = m_AvailableList.Last.Value;
         m_AvailableList.RemoveLast();
         return result;
+    }
+
+    public void ReturnObject(T o)
+    {
+        m_AvailableList.AddLast(o);
     }
 }

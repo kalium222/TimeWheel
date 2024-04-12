@@ -207,7 +207,8 @@ namespace TimerManagerWindow
             if (GUILayout.Button("1000,000 add"))
             {
                 for (int i=0; i<k_pressAdd; i++)
-                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
+                    // instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
+                    instance.AddTimer(new(), new(), new(), test);
             }
             EditorGUILayout.EndHorizontal();
 
