@@ -3,9 +3,27 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Linq;
 using UnityEngine;
+using Codice.CM.Common;
 
 namespace Timer
 {
+
+    public static class TimerConstants
+    {
+        // timespan for one tick, 1ms
+        public static readonly TimeSpan k_DeltaTime = new(0, 0, 0, 0, 1);
+        public static readonly TimeSpan k_MaxTime = new(0, 0, 0, 
+                    (int)(uint.MaxValue/1000), (int)(uint.MaxValue%1000));
+
+        // 32bit = 8bit(rootwheel) + 4 * 6bit(others)
+        public const int k_TWRootBits = 8;
+        public const uint k_TWRootSize = 1 << k_TWRootBits; 
+        public const uint k_TWRootMask = k_TWRootSize - 1;
+        public const int k_TWBits = 6;
+        public const uint k_TWSize = 1 << k_TWBits; 
+        public const uint k_TWMask = k_TWSize - 1;
+    }
+
     public class TimerPool : ObjectPool<Timer>
     {
         public TimerPool(int initCount) : base(initCount) {}
@@ -19,88 +37,42 @@ namespace Timer
     public class TimeWheel
     {
         // private field
-        // current index of the bucket array
-        private int m_current;
-        private readonly TimerList[] m_bucketArray;
+        public readonly TimerList[] BucketArray;
 
         // public field
-        public readonly TimeSpan tickMs;
         public readonly int wheelSize;
         
-        public TimeSpan MaxTimeSpan => tickMs * wheelSize;
-
         // public method
-        public TimeWheel(TimeSpan tickMs, int wheelSize)
+        public TimeWheel(int wheelSize)
         {
-            m_current = 0;
-            this.tickMs = tickMs;
             this.wheelSize = wheelSize;
-            m_bucketArray = new TimerList[wheelSize];
+            BucketArray = new TimerList[wheelSize];
             for (int i=0; i< this.wheelSize; i++)
-                m_bucketArray[i] = new TimerList();
-        }
-
-        // 将move和dotask交给HierachicalTimeWheel完成
-        // Tick仅仅改变current
-        // 进位则返回true
-        public bool Tick()
-        {
-            m_current++;
-            bool carry =  m_current==wheelSize ;
-            m_current %= wheelSize;
-            return carry;
-        }
-
-        // 该timewheel上，现在走过的时间
-        public TimeSpan GetCurrentTime()
-        {
-            return m_current * tickMs;
-        }
-        
-        public TimerList GetCurrentTimerList()
-        {
-            return m_bucketArray[m_current];
+                BucketArray[i] = new TimerList();
         }
 
         public List<int> GetDistri()
         {
             List<int> res = new();
-            foreach ( TimerList l in m_bucketArray )
+            foreach ( TimerList l in BucketArray )
             {
                 res.Add(l.Count);
             }
             return res;
         }
 
-        // 不判断条件
-        public void AddTimer(Timer timer)
-        {
-            m_bucketArray[(int)(timer.expire/tickMs)%wheelSize].Add(timer);
-        }
-
-        // 从timewheel中移除timer
-        public static void DetachTimer(Timer timer)
-        {
-            TimerList.Detach(timer);
-        }
-
         public void ClearAll()
         {
-            m_current = 0;
-            foreach ( TimerList l in m_bucketArray )
-            {
+            foreach ( TimerList l in BucketArray )
                 l.Clear();
-            }
         }
-
-        public TimerList[] BucketArray => m_bucketArray;
 
         public int Count 
         {
             get
             {
                 int result = 0;
-                foreach ( TimerList l in m_bucketArray )
+                foreach ( TimerList l in BucketArray )
                 {
                     result += l.Count;
                 }
@@ -116,18 +88,16 @@ namespace Timer
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         public static TimerManager? s_instance;
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        // timespan for one tick, 1ms
-        public readonly TimeSpan deltaTime = new(0, 0, 0, 0, 1);
 
-        private TimerPool m_timerPool;
         // private field
-        // 由小到大
-        // array[0] -> ms, array[1] -> s, ...
+        private TimerPool m_timerPool;
         private List<TimeWheel> m_timeWheelArray;
+        
         private ConcurrentDictionary<uint, Timer> m_timerTable;
         private uint m_maxId = 0;
         private bool m_stop = true;
         private DateTime m_current;
+        private uint m_currentTick;
         
 
         private void Awake()
@@ -148,15 +118,16 @@ namespace Timer
             m_timerPool = new(10000);
             m_timeWheelArray = new List<TimeWheel>
             {
-                // ms, s, min, hour, day
-                new(new TimeSpan(0, 0, 0, 0, 1), 1000),
-                new(new TimeSpan(0, 0, 0, 1), 60),
-                new(new TimeSpan(0, 0, 1), 60),
-                new(new TimeSpan(0, 1, 0), 24),
-                new(new TimeSpan(1, 0, 0), 50)
+                // 32bit = 8bit(rootwheel) + 4 * 6bit(others)
+                new((int)TimerConstants.k_TWRootSize),
+                new((int)TimerConstants.k_TWSize),
+                new((int)TimerConstants.k_TWSize),
+                new((int)TimerConstants.k_TWSize),
+                new((int)TimerConstants.k_TWSize)
             };
             m_timerTable = new ConcurrentDictionary<uint, Timer>();
             m_current = DateTime.Now;
+            m_currentTick = 0;
         }
 
         private void Update()
@@ -165,7 +136,8 @@ namespace Timer
             while ( !m_stop && m_current<now )
             {
                 Tick();
-                m_current += deltaTime;
+                m_current += TimerConstants.k_DeltaTime;
+                m_currentTick++;
             }
         }
 
@@ -223,6 +195,7 @@ namespace Timer
             {
                 m_stop = false;
                 m_current = DateTime.Now;
+                m_currentTick = 0;
                 return true;
             }
             else 
@@ -268,15 +241,8 @@ namespace Timer
         // total time span from starting running to current time
         public TimeSpan GetCurrentTime()
         {
-            TimeSpan result = new();
-            foreach ( TimeWheel timewheel in m_timeWheelArray )
-                result += timewheel.GetCurrentTime();
-            return result;
-        }
-
-        public TimeSpan GetMaxTime()
-        {
-            return m_timeWheelArray.Last().MaxTimeSpan;
+            return new TimeSpan(0, 0, 0, (int)(m_currentTick/1000), 
+                                    (int)(m_currentTick%1000));
         }
 
         // Get timer from pool
@@ -287,8 +253,7 @@ namespace Timer
         {
             Timer timer = m_timerPool.GetObject();
             timer.Id = GetAvaliableId();
-            timer.expire = expire;
-            timer.interval = interval;
+            timer.Span2Uint(expire, interval);
             timer.times = times;
             timer.callback = callback;
             m_timerTable.TryAdd(timer.Id, timer);
@@ -298,8 +263,8 @@ namespace Timer
 
         private void AddTimerToWheel(Timer timer)
         {
-            TimeSpan idx = timer.expire - GetCurrentTime();
-            if ( timer.expire <= GetCurrentTime() )
+            uint idx = timer.expire - m_currentTick;
+            if ( idx <= 0 )
                 m_timeWheelArray.First().AddTimer(timer);
             else if ( idx >= GetMaxTime() )
                 m_timeWheelArray.Last().AddTimer(timer);

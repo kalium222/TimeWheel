@@ -11,8 +11,8 @@ namespace Timer
         // public
         // time span from being added into the TimerManager to when
         // it should be executed
-        public TimeSpan expire;
-        public TimeSpan interval;
+        public uint expire;
+        public uint interval;
         public uint times;
         public Action callback;
 
@@ -28,7 +28,7 @@ namespace Timer
         public Timer(uint id, TimeSpan expire, Action callback) 
         {
             m_id = id;
-            this.expire = expire;
+            this.expire = (uint)expire.TotalMilliseconds;
             interval = new();
             times = 1;
             this.callback = callback;
@@ -38,10 +38,16 @@ namespace Timer
                 uint times, Action callback) 
         {
             m_id = id;
-            this.expire = expire;
-            this.interval = interval;
+            this.expire = (uint)expire.TotalMilliseconds;
+            this.interval = (uint)interval.TotalMilliseconds;
             this.times = times;
             this.callback = callback;
+        }
+
+        public void Span2Uint(TimeSpan expire, TimeSpan interval)
+        {
+            this.expire = (uint)expire.TotalMilliseconds;
+            this.interval = (uint)interval.TotalMilliseconds;
         }
 
         public void Destroy()
