@@ -11,6 +11,9 @@
 # layout file
 *.wlt
 
+# profiler file
+*.data
+
 *.csproj
 *.unityproj
 *.sln
