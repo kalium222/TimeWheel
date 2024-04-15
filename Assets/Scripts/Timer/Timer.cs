@@ -62,15 +62,10 @@ namespace Timer
             get { return m_id; }
             set { m_id = value; }
         }
+
+        public Timer? Prev = null;
+        public Timer? Next = null;
         
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? Prev { get; set; }
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? Next { get; set; }
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-
         // 应该被HierachicalTimeWheel调用
         // 仅smallest timewheel需DoTask
         // 还需要重新调度
