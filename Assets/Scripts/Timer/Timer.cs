@@ -14,7 +14,8 @@ namespace Timer
         public uint expire;
         public uint interval;
         public uint times;
-        public Action callback;
+        public Action<int, int> callback = (int a, int b) => {};
+        public int a = 0, b = 0;
 
         public Timer()
         {
@@ -22,26 +23,23 @@ namespace Timer
             expire = 0;
             interval = 0;
             times = 1;
-            callback = () => {};
         }
 
-        public Timer(uint id, TimeSpan expire, Action callback) 
+        public Timer(uint id, TimeSpan expire) 
         {
             m_id = id;
             this.expire = (uint)expire.TotalMilliseconds;
             interval = 0;
             times = 1;
-            this.callback = callback;
         }
 
         public Timer(uint id, TimeSpan expire, TimeSpan interval, 
-                uint times, Action callback) 
+                uint times) 
         {
             m_id = id;
             this.expire = (uint)expire.TotalMilliseconds;
             this.interval = (uint)interval.TotalMilliseconds;
             this.times = times;
-            this.callback = callback;
         }
 
         public void Span2Uint(TimeSpan expire, TimeSpan interval)
@@ -73,7 +71,7 @@ namespace Timer
         // 还需要重新调度
         public void Callback()
         {
-            callback();
+            callback(a, b);
         }
     }
 

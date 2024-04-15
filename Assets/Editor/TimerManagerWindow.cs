@@ -15,6 +15,7 @@ namespace TimerManagerWindow
         private int m_interval_ms, m_interval_s, m_interval_min;
         private int m_interval_hour, m_interval_day;
         private int m_times;
+        private int m_a, m_b;
         private bool m_foldAddTimer = false;
         private bool m_foldModifyTimer = false;
         private readonly Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
@@ -22,7 +23,9 @@ namespace TimerManagerWindow
         private const int k_pressExecute = 10_0000;
         private const int k_pressAdd = 100_0000;
 
-        public Action test = () => {};
+        public Action<int, int> callback = (int a, int b) => {
+            Debug.Log("ms: " + DateTime.Now.Millisecond + ", Timer a: " + a + ", b: " + b);
+        };
 
         private void MaintainQueue(Timer.Timer timer)
         {
@@ -51,11 +54,7 @@ namespace TimerManagerWindow
             TimeSpan expire = GetRandomTimeSpan();
             TimeSpan interval = GetRandomTimeSpan();
             uint times = (uint)GetRandomTimes();
-            Debug.Log("Generageted expire: " + expire + ", interval: " + interval + ", times: " + times);
-            instance.AddTimer(expire, interval, times, ()=>{
-                // TODO: callback
-                Debug.Log("The " + index + "th task, at " + expire.Seconds + ", interval: " + interval.Seconds + ", times: " + times);
-            });
+            instance.AddTimer(expire, interval, times, index, index);
         }
 
         [MenuItem("Window/MyWindow/TimerManager")]
@@ -119,12 +118,15 @@ namespace TimerManagerWindow
 
                 GUILayout.Label("times: ", EditorStyles.boldLabel);
                 m_times = EditorGUILayout.IntField("times", m_times);
+
+                GUILayout.Label("param: ", EditorStyles.boldLabel);
+                m_a = EditorGUILayout.IntField("param1: ", m_a);
+                m_b = EditorGUILayout.IntField("param2: ", m_b);
+
             
                 if ( GUILayout.Button("Add"))
                 {
-                    uint id = instance.AddTimer(expire, interval, (uint)m_times, ()=>{
-                        Debug.Log(DateTime.Now.Millisecond);
-                    });
+                    uint id = instance.AddTimer(expire, interval, (uint)m_times, m_a, m_b, callback);
                     Debug.Log("Added a Timer!");
                     MaintainQueue(instance.GetTimer(id));
                 }
@@ -159,12 +161,16 @@ namespace TimerManagerWindow
 
                 GUILayout.Label("times: ", EditorStyles.boldLabel);
                 m_times = EditorGUILayout.IntField("times", m_times);
+
+                GUILayout.Label("param: ", EditorStyles.boldLabel);
+                m_a = EditorGUILayout.IntField("param1: ", m_a);
+                m_b = EditorGUILayout.IntField("param2: ", m_b);
             
                 EditorGUILayout.BeginHorizontal();
                 if ( GUILayout.Button("Modify"))
                 {
                     if (instance.ModifyTimer(id:(uint)m_id, expire, interval,
-                                                    (uint)m_times, ()=>{}))
+                                                    (uint)m_times, m_a, m_b))
                         Debug.Log("Modified a Timer by id: " + m_id.ToString() + "!");
                     else
                         Debug.Log("No such key!");
@@ -200,8 +206,7 @@ namespace TimerManagerWindow
             {
                 for (int i=0; i<k_pressExecute; i++)
                 {
-                    // AddRandomTimer(i);
-                    instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
+                    AddRandomTimer(i);
                 }
             }
             EditorGUILayout.Space(5);
@@ -209,8 +214,8 @@ namespace TimerManagerWindow
             {
                 for (int i=0; i<k_pressAdd; i++)
                 {
-                    // instance.AddTimer(GetRandomTimeSpan(), GetRandomTimeSpan(), GetRandomTimes(), test);
-                    instance.AddTimer(new(), new(), new(), test);
+                    // AddRandomTimer(i);
+                    instance.AddTimer(new(), new(), new(), new(), new());
                 }
             }
             EditorGUILayout.EndHorizontal();

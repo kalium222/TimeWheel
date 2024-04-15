@@ -159,8 +159,8 @@ namespace Timer
                     RemoveTimer(t.Id);
                 else 
                 {
-                    this.ModifyTimer(t, t.interval+m_currentTick,
-                        t.interval, t.times-1, t.callback);
+                    ModifyTimer(t, t.interval+m_currentTick,
+                        t.interval, t.times-1);
                 }
             }
             m_currentTick++;
@@ -245,11 +245,27 @@ namespace Timer
         // 把timer加入Dictionary
         // 根据时间把timer加入合适的timewheel
         public uint AddTimer(TimeSpan expire, TimeSpan interval,
-                                uint times, Action callback)
+                                uint times, int a, int b)
         {
             Timer timer = m_timerPool.GetObject();
             timer.Span2Uint(expire, interval);
             timer.times = times;
+            timer.a = a;
+            timer.b = b;
+            timer.Id = GetAvaliableId();
+            m_timerTable.TryAdd(timer.Id, timer);
+            AddTimerToWheel(timer);
+            return timer.Id;
+        }
+        public uint AddTimer(TimeSpan expire, TimeSpan interval,
+                                uint times, int a, int b,
+                                Action<int, int> callback)
+        {
+            Timer timer = m_timerPool.GetObject();
+            timer.Span2Uint(expire, interval);
+            timer.times = times;
+            timer.a = a;
+            timer.b = b;
             timer.callback = callback;
             timer.Id = GetAvaliableId();
             m_timerTable.TryAdd(timer.Id, timer);
@@ -310,22 +326,32 @@ namespace Timer
         }
 
         private void ModifyTimer(Timer timer, uint expire, uint interval,
-                                     uint times, Action callback)
+                                     uint times)
         {
             timer.expire = expire;
             timer.interval = interval;
             timer.times = times;
-            timer.callback = callback;
+            RefreshTimer(timer);
+        }
+
+        private void ModifyTimer(Timer timer, uint expire, uint interval,
+                                     uint times, int a, int b)
+        {
+            timer.expire = expire;
+            timer.interval = interval;
+            timer.times = times;
+            timer.a = a;
+            timer.b = b;
             RefreshTimer(timer);
         }
 
         // return false if it doesn't contain the key
         public bool ModifyTimer(uint id, TimeSpan expire, TimeSpan interval,
-                                    uint times, Action callback)
+                                    uint times, int a, int b)
         {
             Timer modified = GetTimer(id);
             if ( modified==null ) return false;
-            ModifyTimer(modified, 0, 0, times, callback);
+            ModifyTimer(modified, 0, 0, times, a, b);
             modified.Span2Uint(expire, interval);
             return true;
         }

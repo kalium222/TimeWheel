@@ -22,13 +22,13 @@ public class TestTimer
         Assert.IsTrue(t1.interval==0);
         Assert.IsTrue(t1.times==1);
         // Test Timer(uint id, TimeSpan expire, Action callback)
-        Timer.Timer t2 = new(8, new TimeSpan(1, 1, 1), ()=>{});
+        Timer.Timer t2 = new(8, new TimeSpan(1, 1, 1));
         Assert.IsTrue(t2.Id==8);
         Assert.IsTrue(t2.times==1);
         // Test Timer(uint id, TimeSpan expire, TimeSpan interval, 
         //          uint times, Action callback)
         Timer.Timer t3 = new(111, new TimeSpan(3, 3, 3),
-                    new TimeSpan(7, 7, 7),  114514, ()=>{});
+                    new TimeSpan(7, 7, 7),  114514);
         Assert.IsTrue(t3.Id==111);
         Assert.IsTrue(t3.times==114514);
     }
@@ -51,9 +51,8 @@ public class TestTimer
     public void TestTimerCallback()
     {
         int a = 1;
-        Timer.Timer t = new(1, new(), () => {
-            a++;
-        });
+        Timer.Timer t = new(1, new());
+        t.callback = (int x, int y) => {a++;};
         Assert.IsTrue(a==1);
         t.Callback();
         Assert.IsTrue(a==2);
@@ -65,7 +64,7 @@ public class TestTimer
     {
         TimerList l = new();
         for (int i=0; i<100; i++)
-            l.Add(new Timer.Timer((uint)i, new TimeSpan(1, 1, 1), ()=>{}));
+            l.Add(new Timer.Timer((uint)i, new TimeSpan(1, 1, 1)));
         int index = 0;
         foreach ( Timer.Timer t in l ) 
         {
@@ -82,7 +81,7 @@ public class TestTimer
         List<Timer.Timer> list = new();
         for (int i=0; i<100; i++) 
         {
-            Timer.Timer t = new((uint)i, new TimeSpan(1, 1, 1), ()=>{});
+            Timer.Timer t = new((uint)i, new TimeSpan(1, 1, 1));
             l.Add(t);
             list.Add(t);
         }
@@ -132,7 +131,7 @@ public class TestTimerManager
         for (int i=0; i<100; i++)
         {
             Assert.IsFalse(instance.ModifyTimer(
-                        (uint)rd.Next(0, 1000000000), new(), new(), 1, ()=>{}));
+                        (uint)rd.Next(0, 1000000000), new(), new(), 1, 0, 0));
         }
         yield return null;
     }
