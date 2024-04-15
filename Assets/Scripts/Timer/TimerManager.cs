@@ -24,7 +24,7 @@ namespace Timer
 
     public class TimerPool : ObjectPool<Timer>
     {
-        public TimerPool(int initCount) : base(initCount) {}
+        public TimerPool(int initCount, int level) : base(initCount, level) {}
 
         protected override Timer Create()
         {
@@ -113,7 +113,7 @@ namespace Timer
 
         private void Init()
         {
-            m_timerPool = new(10000);
+            m_timerPool = new(10_0000, 1_0000);
             m_timeWheelArray = new List<TimeWheel>
             {
                 // 32bit = 8bit(rootwheel) + 4 * 6bit(others)
