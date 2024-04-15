@@ -3,8 +3,6 @@ using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 using Timer;
-using NUnit.Framework.Internal;
-using System.Data.Common;
 
 namespace TimerManagerWindow
 {
