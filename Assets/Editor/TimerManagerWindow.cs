@@ -20,7 +20,8 @@ namespace TimerManagerWindow
         private bool m_foldModifyTimer = false;
         private readonly Queue<Timer.Timer> m_addedTimerDisplayQueue = new();
         private const int m_displayTimerSize = 15;
-        private const int k_pressExecute = 10_0000;
+        private const int k_pressExecute = 1000;
+
         private const int k_pressAdd = 100_0000;
 
         public Action<int, int> callback = (int a, int b) => {

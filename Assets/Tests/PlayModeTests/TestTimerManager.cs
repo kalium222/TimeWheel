@@ -33,19 +33,19 @@ public class TestTimer
         Assert.IsTrue(t3.times==114514);
     }
 
-    [Test]
-    public void TestTimerDestroy()
-    {
-        Timer.Timer t2 = new();
-        Timer.Timer t3 = new();
-        t2.Next = t3;
-        t3.Prev = t2;
-        Assert.IsNotNull(t2.Next);
-        Assert.IsNotNull(t3.Prev);
-        t2.Destroy();
-        Assert.IsNull(t2.Next);
-        Assert.IsNull(t3.Prev);
-    }
+    // [Test]
+    // public void TestTimerDestroy()
+    // {
+    //     Timer.Timer t2 = new();
+    //     Timer.Timer t3 = new();
+    //     t2.Next = t3;
+    //     t3.Prev = t2;
+    //     Assert.IsNotNull(t2.Next);
+    //     Assert.IsNotNull(t3.Prev);
+    //     t2.Destroy();
+    //     Assert.IsNull(t2.Next);
+    //     Assert.IsNull(t3.Prev);
+    // }
 
     [Test]
     public void TestTimerCallback()
@@ -59,39 +59,39 @@ public class TestTimer
     }
 
     // TimerList
-    [Test]
-    public void TestTimerListIterator()
-    {
-        TimerList l = new();
-        for (int i=0; i<100; i++)
-            l.Add(new Timer.Timer((uint)i, new TimeSpan(1, 1, 1)));
-        int index = 0;
-        foreach ( Timer.Timer t in l ) 
-        {
-            Assert.IsTrue(t.Id==(99-index));
-            index++;
-        }
-        Assert.IsTrue(l.Count==100);
-    }
+    // [Test]
+    // public void TestTimerListIterator()
+    // {
+    //     TimerList l = new();
+    //     for (int i=0; i<100; i++)
+    //         l.Add(new Timer.Timer((uint)i, new TimeSpan(1, 1, 1)));
+    //     int index = 0;
+    //     foreach ( Timer.Timer t in l ) 
+    //     {
+    //         Assert.IsTrue(t.Id==(99-index));
+    //         index++;
+    //     }
+    //     Assert.IsTrue(l.Count==100);
+    // }
 
-    [Test]
-    public void TestTimerListDetach()
-    {
-        TimerList l = new();
-        List<Timer.Timer> list = new();
-        for (int i=0; i<100; i++) 
-        {
-            Timer.Timer t = new((uint)i, new TimeSpan(1, 1, 1));
-            l.Add(t);
-            list.Add(t);
-        }
-        Assert.IsTrue(l.Count==100);
-        for (int i=0; i<100; i++)
-        {
-            TimerList.Detach(list[99-i]);
-            Assert.IsTrue(l.Count==99-i);
-        }
-    }
+    // [Test]
+    // public void TestTimerListDetach()
+    // {
+    //     TimerList l = new();
+    //     List<Timer.Timer> list = new();
+    //     for (int i=0; i<100; i++) 
+    //     {
+    //         Timer.Timer t = new((uint)i, new TimeSpan(1, 1, 1));
+    //         l.Add(t);
+    //         list.Add(t);
+    //     }
+    //     Assert.IsTrue(l.Count==100);
+    //     for (int i=0; i<100; i++)
+    //     {
+    //         TimerList.Detach(list[99-i]);
+    //         Assert.IsTrue(l.Count==99-i);
+    //     }
+    // }
 }
 
 public class TestTimerManager

@@ -299,7 +299,13 @@ namespace Timer
         // or Modify() or Refresh()
         private void DetachTimerFromWheel(Timer timer)
         {
-            TimerList.Detach(timer);
+            foreach (var wheel in m_timeWheelArray)
+            {
+                foreach (var list in wheel.BucketArray)
+                {
+                    list.Detach(timer);
+                }
+            }
         }
 
         // Remove a timer from dictionary;

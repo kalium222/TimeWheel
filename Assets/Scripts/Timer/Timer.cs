@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 namespace Timer
 {
@@ -48,24 +49,11 @@ namespace Timer
             this.interval = (uint)interval.TotalMilliseconds;
         }
 
-        public void Destroy()
-        {
-            // GC will do the rest things
-            Next?.Destroy();
-            Next = null;
-            Prev = null;
-        }
-
         public uint Id {
             get { return m_id; }
             set { m_id = value; }
         }
 
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? Prev = null;
-        public Timer? Next = null;
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        
         // 应该被HierachicalTimeWheel调用
         // 仅smallest timewheel需DoTask
         // 还需要重新调度
@@ -75,97 +63,34 @@ namespace Timer
         }
     }
 
-    public class TimerList : IEnumerable
+    public class TimerList 
     {
-        private readonly Timer m_head;
-        
+        public readonly LinkedList<Timer> List = new();
+
         // public method
-        public TimerList()
-        {
-            m_head = new Timer();
-        }
-
-        private class TimerIterator : IEnumerator
-        {
-            private readonly TimerList m_container;
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-            private Timer? m_postion;
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-            public TimerIterator(TimerList container)
-            {
-                m_container = container;
-                m_postion = container.Head;
-            }
-            void IEnumerator.Reset()
-            {
-                m_postion = m_container.Head;
-            }
-            bool IEnumerator.MoveNext()
-            {
-                m_postion = m_postion?.Next;
-                return m_postion != null;
-            }
-            object IEnumerator.Current
-            {
-                get
-                {
-                    if ( m_postion==null )
-                        throw new IndexOutOfRangeException();
-                    return m_postion;
-                }
-            }
-        }
-
-        public IEnumerator GetEnumerator()
-        {
-            return new TimerIterator(this);
-        }
 
         // 不检查各种条件(是否重复等)，交给timewheel
         // 及heirachical timewheels
         public void Add(Timer timer)
         {
-            timer.Prev = m_head;
-            timer.Next = m_head.Next;
-            if ( timer.Next != null ) 
-                timer.Next.Prev = timer;
-            m_head.Next = timer;
+            List.AddLast(timer);
         }
 
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public static void Detach(Timer? timer)
+        public void Detach(Timer? timer)
 #pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
         {
-            if ( timer==null )
-                return;
-            if ( timer.Next != null )
-                timer.Next.Prev = timer.Prev;
-            if ( timer.Prev != null )
-                timer.Prev.Next = timer.Next;
-            timer.Next = timer.Prev = null;
+            if ( List.Contains(timer))
+                List.Remove(timer);
         }
 
         public void Clear()
         {
-            m_head.Next?.Destroy();
-            m_head.Next = null;
+            List.Clear();
         }
 
-        public Timer Head => m_head;
+        public Timer? First => List.First?.Value ?? null;
 
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-        public Timer? First => m_head.Next;
-#pragma warning restore CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-
-        public int Count
-        {
-            get
-            {
-                int result = 0;
-                foreach ( Timer t in this )
-                    result++;
-                return result;
-            }
-        }
+        public int Count => List.Count;
     }
 }
